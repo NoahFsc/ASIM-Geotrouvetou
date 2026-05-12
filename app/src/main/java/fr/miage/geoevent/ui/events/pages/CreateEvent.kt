@@ -1,79 +1,123 @@
 package fr.miage.geoevent.ui.events.pages
 
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.miage.geoevent.ui.events.components.AppButton
+import fr.miage.geoevent.ui.events.components.AppImagePicker
 import fr.miage.geoevent.ui.events.components.AppTextField
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateEvent() {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+fun CreateEventPage(onBackClick: () -> Unit) {
+    val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "Nouvel événement",
-            style = MaterialTheme.typography.headlineMedium
-        )
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
 
-        Text(
-            text = "Ici tu pourras créer ton événement."
-        )
+    val isFormValid = title.isNotBlank()
 
-        AppButton(
-            text = "Modifier le mot de passe",
-            onClick = {
-                println("Bouton cliqué")
-            },
-            enabled = true
-        )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Créer un événement") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            AppTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = "Titre",
+                placeholder = "Ex: Concert au parc",
+                required = true
+            )
 
-        AppButton(
-            text = "Modifier le mot de passe",
-            onClick = {
-                println("Bouton cliqué")
-            },
-            enabled = false
-        )
+            AppTextField(
+                value = description,
+                onValueChange = { description = it },
+                label = "Description",
+                placeholder = "Décrivez l'événement"
+            )
 
-        AppTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = "Adresse email",
-            placeholder = "exemple@gmail.com",
-            required = true
-        )
+            // Affichage des coordonnées (non éditables)
+            Text(
+                text = "Position : 20 avenue de la sagesse, Amiens",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
 
-        AppTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = "Mot de passe",
-            placeholder = "Votre mot de passe",
-            required = true,
-            isPassword = true
-        )
+            // Utilisation du nouveau composant ImagePicker
+            AppImagePicker(
+                selectedUri = imageUri,
+                onUriSelected = { imageUri = it }
+            )
+
+            AppButton(
+                text = "Créer l'événement",
+                onClick = {
+                    if (title.isBlank()) {
+                        Toast.makeText(
+                            context,
+                            "Veuillez remplir le titre",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@AppButton
+                    }
+
+                    // TODO: Brancher ici l'appel API / Supabase
+                    Toast.makeText(context, "Événement prêt à être créé", Toast.LENGTH_SHORT).show()
+                    onBackClick() // Retourner à la carte après création
+                },
+                enabled = isFormValid,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun CreateEventPreview() {
-    CreateEvent()
+private fun CreateEventPagePreview() {
+    MaterialTheme {
+        CreateEventPage(onBackClick = {})
+    }
 }
