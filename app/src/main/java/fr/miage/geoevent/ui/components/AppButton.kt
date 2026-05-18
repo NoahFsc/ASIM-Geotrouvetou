@@ -1,4 +1,4 @@
-package fr.miage.geoevent.ui.events.components
+package fr.miage.geoevent.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height

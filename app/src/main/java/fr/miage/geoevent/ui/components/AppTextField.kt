@@ -1,4 +1,4 @@
-package fr.miage.geoevent.ui.events.components
+package fr.miage.geoevent.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

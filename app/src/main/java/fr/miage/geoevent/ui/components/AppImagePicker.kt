@@ -1,4 +1,4 @@
-package fr.miage.geoevent.ui.events.components
+package fr.miage.geoevent.ui.components
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult

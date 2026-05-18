@@ -1,4 +1,4 @@
-package fr.miage.geoevent.ui.events.components
+package fr.miage.geoevent.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
