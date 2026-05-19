@@ -43,7 +43,7 @@ fun CreateEventPage(
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     // Validation simple : titre non vide et pas de chargement en cours
-    val isFormValid = title.isNotBlank() && !isLoading
+    val isFormValid = title.isNotBlank() && description.isNotBlank() && !isLoading
 
     Scaffold(
         topBar = {

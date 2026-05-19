@@ -2,6 +2,7 @@ package fr.miage.geoevent.utils
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Log
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
 import java.io.ByteArrayOutputStream
@@ -17,11 +18,16 @@ class ImageHelper(private val client: SupabaseClient) {
      * @return L'URL publique de l'image stockée en .webp
      */
     suspend fun uploadEventImage(fileName: String, bytes: ByteArray): String {
-        val webpBytes = convertToWebp(bytes)
         val finalFileName = if (fileName.endsWith(".webp")) fileName else "$fileName.webp"
-        
+        val payload = try {
+            convertToWebp(bytes)
+        } catch (e: Exception) {
+            Log.e("ImageHelper", "Conversion WebP échouée, upload de l'image originale.", e)
+            bytes
+        }
+
         val bucket = client.storage.from(bucketName)
-        bucket.upload(finalFileName, webpBytes)
+        bucket.upload(finalFileName, payload)
 
         return bucket.publicUrl(finalFileName)
     }
@@ -31,13 +37,17 @@ class ImageHelper(private val client: SupabaseClient) {
      */
     private fun convertToWebp(bytes: ByteArray): ByteArray {
         val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        val out = ByteArrayOutputStream()
-        
-        // Utilisation du format WEBP_LOSSY (disponible depuis Android 10/API 29+)
-        // Ou WEBP pour les versions plus anciennes. 
-        // Ici on utilise WEBP_LOSSY à 80% de qualité pour un excellent ratio poids/qualité.
-        bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 80, out)
-        
-        return out.toByteArray()
+            ?: throw IllegalArgumentException("Impossible de décoder l'image en bitmap.")
+
+        return ByteArrayOutputStream().use { out ->
+            // Utilisation du format WEBP_LOSSY (disponible depuis Android 10/API 29+)
+            // Ou WEBP pour les versions plus anciennes.
+            // Ici on utilise WEBP_LOSSY à 80% de qualité pour un excellent ratio poids/qualité.
+            val success = bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 80, out)
+            if (!success) {
+                throw IllegalStateException("Échec de la compression WebP.")
+            }
+            out.toByteArray()
+        }
     }
 }
