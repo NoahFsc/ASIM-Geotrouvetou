@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import fr.miage.geoevent.GeoEventApplication
 import fr.miage.geoevent.R
 import fr.miage.geoevent.databinding.ActivityRegisterBinding
+import fr.miage.geoevent.domain.models.User
 import fr.miage.geoevent.ui.map.MainActivity
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
@@ -35,7 +36,7 @@ class RegisterActivity : AppCompatActivity() {
             insets
         }
 
-        val supabase = (applicationContext as GeoEventApplication).supabase
+        val app = applicationContext as GeoEventApplication
 
         binding.btnInscription.setOnClickListener {
             // "emailInput" / "passwordInput" : nommage explicite pour éviter le shadowing
@@ -49,17 +50,31 @@ class RegisterActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 setLoading(true)
                 try {
-                    supabase.auth.signUpWith(Email) {
+                    app.supabase.auth.signUpWith(Email) {
                         email = emailInput
                         password = passwordInput
                     }
-                    // La confirmation email est désactivée côté Supabase :
-                    // signUpWith établit directement la session, on navigue sans vérification.
-                    goToMain()
                 } catch (e: Exception) {
                     Toast.makeText(this@RegisterActivity, traduireErreur(e.message), Toast.LENGTH_LONG).show()
                     setLoading(false)
+                    return@launch
                 }
+
+                try {
+                    val authUser = app.supabase.auth.currentUserOrNull()
+                    if (authUser != null) {
+                        app.databaseService.createProfile(
+                            User(id = authUser.id, email = emailInput)
+                        )
+                    }
+                } catch (e: Exception) {
+                    // Le compte auth est créé, mais le profil a échoué.
+                    // On navigue quand même pour ne pas bloquer l'utilisateur.
+                }
+
+                // La confirmation email est désactivée côté Supabase :
+                // signUpWith établit directement la session, on navigue sans vérification.
+                goToMain()
             }
         }
 
