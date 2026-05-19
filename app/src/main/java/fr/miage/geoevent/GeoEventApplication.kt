@@ -8,6 +8,8 @@ import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.storage.Storage
+import io.ktor.client.engine.okhttp.OkHttp
 
 class GeoEventApplication : Application() {
 
@@ -16,9 +18,12 @@ class GeoEventApplication : Application() {
             supabaseUrl = BuildConfig.SUPABASE_URL,
             supabaseKey = BuildConfig.SUPABASE_KEY
         ) {
-            install(Auth)
-            install(Postgrest)
-            install(Realtime)
+            httpEngine = OkHttp.create()
+
+            install(Auth)      // Nécessaire pour gérer l'utilisateur connecté (ID, session)
+            install(Postgrest) // Pour les opérations CRUD sur la base de données
+            install(Realtime)  // Pour la mise à jour automatique de la carte
+            install(Storage)   // Pour gérer l'upload des photos dans le bucket EventImages
         }
     }
 
