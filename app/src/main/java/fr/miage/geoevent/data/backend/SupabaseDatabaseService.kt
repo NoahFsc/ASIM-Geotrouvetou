@@ -3,6 +3,7 @@ package fr.miage.geoevent.data.backend
 import fr.miage.geoevent.domain.interfaces.IDatabaseService
 import fr.miage.geoevent.domain.models.GeoEvent
 import fr.miage.geoevent.utils.ImageHelper
+import fr.miage.geoevent.domain.models.User
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.realtime.PostgresAction
@@ -53,4 +54,21 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
             emit(getAllEvents()) // Émet la liste initiale dès l'abonnement
         }
     }
+
+    // Créer un utilisateur
+    override suspend fun createProfile(user: User) {
+        client.postgrest["profiles"].insert(user)
+    }
+
+    // Supprimer un utilisateur
+    override suspend fun deleteProfile(userId: String) {
+        client.postgrest["profiles"].delete {
+            filter {
+                eq("id", userId)
+            }
+        }
+        // Supprime le compte dans auth.users via une fonction SQL (security definer)
+        client.postgrest.rpc("delete_own_account")
+    }
+
 }

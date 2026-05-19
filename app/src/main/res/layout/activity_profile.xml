@@ -10,34 +10,50 @@
 
     <ImageView
         android:id="@+id/ivAvatar"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="25dp"
+        android:layout_marginTop="112dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="16dp"
         android:src="@android:drawable/ic_menu_myplaces"
-        android:layout_marginTop="64dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/tvEmail"
+        app:layout_constraintEnd_toEndOf="@+id/tvEmail"
+        app:layout_constraintStart_toStartOf="@+id/tvEmail"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvEmail"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
         android:textAppearance="?attr/textAppearanceTitleMedium"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/ivAvatar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnDeconnexion"
+        app:layout_constraintEnd_toEndOf="@+id/btnDeconnexion"
+        app:layout_constraintStart_toStartOf="@+id/btnDeconnexion"
+        app:layout_constraintTop_toBottomOf="@+id/ivAvatar"
         tools:text="user@example.com" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnDeconnexion"
         style="@style/Widget.Material3.Button.TonalButton"
-        android:layout_width="0dp"
+        android:layout_width="363dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="63dp"
         android:text="@string/btn_deconnexion"
-        android:layout_marginTop="32dp"
-        app:layout_constraintTop_toBottomOf="@id/tvEmail"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/btnSupprimerCompte"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvEmail" />
+
+    <Button
+        android:id="@+id/btnSupprimerCompte"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="22dp"
+        android:layout_marginBottom="294dp"
+        android:text="@string/btn_supprimer_compte"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnDeconnexion" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

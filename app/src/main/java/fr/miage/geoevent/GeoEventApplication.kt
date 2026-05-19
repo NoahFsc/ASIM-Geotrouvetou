@@ -1,6 +1,8 @@
 package fr.miage.geoevent
 
 import android.app.Application
+import fr.miage.geoevent.data.backend.SupabaseDatabaseService
+import fr.miage.geoevent.domain.interfaces.IDatabaseService
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
@@ -9,12 +11,8 @@ import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.storage.Storage
 import io.ktor.client.engine.okhttp.OkHttp
 
-// Point d'entrée unique pour le client Supabase : toutes les Activity y accèdent via
-// (applicationContext as GeoEventApplication).supabase, sans dépendance entre elles.
 class GeoEventApplication : Application() {
 
-    // "by lazy" garantit une seule instance créée à la première utilisation,
-    // jamais avant que BuildConfig soit disponible.
     val supabase: SupabaseClient by lazy {
         createSupabaseClient(
             supabaseUrl = BuildConfig.SUPABASE_URL,
@@ -27,5 +25,9 @@ class GeoEventApplication : Application() {
             install(Realtime)  // Pour la mise à jour automatique de la carte
             install(Storage)   // Pour gérer l'upload des photos dans le bucket EventImages
         }
+    }
+
+    val databaseService: IDatabaseService by lazy {
+        SupabaseDatabaseService(supabase)
     }
 }
