@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GeoEvent(
-    // L'ID doit être null par défaut pour que Supabase utilise sa fonction uuid_generate_v4() (cf. ton screenshot)
     val id: String? = null,
     val title: String,
     val description: String,

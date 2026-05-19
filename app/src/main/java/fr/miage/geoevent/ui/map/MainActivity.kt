@@ -2,29 +2,18 @@ package fr.miage.geoevent.ui.map
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import androidx.activity.compose.BackHandler
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import fr.miage.geoevent.databinding.ActivityMainBinding
 import fr.miage.geoevent.ui.auth.LoginActivity
-import fr.miage.geoevent.ui.events.CreateEventPage
-import fr.miage.geoevent.ui.map.pages.MapPage
+import fr.miage.geoevent.ui.events.CreateEventActivity
 import fr.miage.geoevent.ui.profile.ProfileActivity
-import fr.miage.geoevent.ui.viewmodel.MainViewModel
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,35 +32,8 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
         }
 
-        binding.composeView.setContent {
-            val events by viewModel.events.collectAsState()
-            var showCreateEvent by remember { mutableStateOf(false) }
-
-            if (showCreateEvent) {
-                BackHandler {
-                    showCreateEvent = false
-                    binding.btnProfil.visibility = View.VISIBLE
-                    binding.btnConnexion.visibility = View.VISIBLE
-                }
-
-                CreateEventPage(
-                    viewModel = viewModel,
-                    onBackClick = {
-                        showCreateEvent = false
-                        binding.btnProfil.visibility = View.VISIBLE
-                        binding.btnConnexion.visibility = View.VISIBLE
-                    }
-                )
-            } else {
-                MapPage(
-                    events = events,
-                    onCreateEventClick = {
-                        showCreateEvent = true
-                        binding.btnProfil.visibility = View.GONE
-                        binding.btnConnexion.visibility = View.GONE
-                    }
-                )
-            }
+        binding.btnCreateEvent.setOnClickListener {
+            startActivity(Intent(this, CreateEventActivity::class.java))
         }
 
         setupMap()
