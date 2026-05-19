@@ -2,4 +2,45 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Primary -->
+    <color name="primary_400">#FF5EBFA5</color>
+    <color name="primary_500">#FF4A9782</color>
+    <color name="primary_600">#FF326658</color>
+    <color name="primary_transparent">#334A9782</color>
+
+    <!-- Background -->
+    <color name="background">#FFF9FBF9</color>
+
+    <!-- Neutrals -->
+    <color name="text_darker">#FF111827</color>
+    <color name="text_dark">#FF374151</color>
+    <color name="text_light">#FF4B5563</color>
+    <color name="text_lighter">#FF6B7280</color>
+    <color name="text_placeholder">#FF9CA3AF</color>
+    <color name="text_disabled">#FFD1D5DB</color>
+
+    <!-- Danger -->
+    <color name="danger_400">#FFFF6558</color>
+    <color name="danger_500">#FFDB574C</color>
+    <color name="danger_600">#FFB2473E</color>
+    <color name="danger_transparent">#33DB574C</color>
+
+    <!-- Warning -->
+    <color name="warning_400">#FFFFA75C</color>
+    <color name="warning_500">#FFDD9150</color>
+    <color name="warning_600">#FF996233</color>
+    <color name="warning_transparent">#33DD9150</color>
+
+    <!-- Success -->
+    <color name="success_400">#FF00B274</color>
+    <color name="success_500">#FF008F5D</color>
+    <color name="success_600">#FF006642</color>
+    <color name="success_transparent">#33008F5D</color>
+
+    <!-- Info -->
+    <color name="info_400">#FF6BB2FF</color>
+    <color name="info_500">#FF5994D4</color>
+    <color name="info_600">#FF4574A6</color>
+    <color name="info_transparent">#1A5994D4</color>
 </resources>
