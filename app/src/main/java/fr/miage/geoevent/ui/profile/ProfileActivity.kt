@@ -22,6 +22,7 @@ class ProfileActivity : AppCompatActivity() {
     // Initialise la vue, affiche l'email de l'utilisateur connecté et gère la déconnexion.
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val app = applicationContext as GeoEventApplication
         enableEdgeToEdge()
         binding = ActivityProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -55,6 +56,27 @@ class ProfileActivity : AppCompatActivity() {
                     Intent(this@ProfileActivity, LoginActivity::class.java)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 )
+            }
+        }
+
+        binding.btnSupprimerCompte.setOnClickListener {
+            lifecycleScope.launch {
+                val userId = supabase.auth.currentUserOrNull()?.id
+                if (userId == null) {
+                    Toast.makeText(this@ProfileActivity, "Session expirée, reconnectez-vous", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                try {
+                    app.databaseService.deleteProfile(userId)
+                    supabase.auth.signOut()
+                    Toast.makeText(this@ProfileActivity, "Compte supprimé", Toast.LENGTH_SHORT).show()
+                    startActivity(
+                        Intent(this@ProfileActivity, LoginActivity::class.java)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    )
+                } catch (e: Exception) {
+                    Toast.makeText(this@ProfileActivity, "Erreur lors de la suppression : ${e.message}", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
