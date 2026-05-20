@@ -1,5 +1,6 @@
 package fr.miage.geoevent.ui.map
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -14,12 +15,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,6 +40,7 @@ import fr.miage.geoevent.ui.components.atoms.BadgeStatus
 import fr.miage.geoevent.ui.components.atoms.Button
 import fr.miage.geoevent.ui.components.atoms.ButtonVariant
 import fr.miage.geoevent.ui.components.atoms.Checkbox
+import fr.miage.geoevent.ui.components.atoms.ImageUploader
 import fr.miage.geoevent.ui.components.atoms.Input
 import fr.miage.geoevent.ui.components.atoms.NavCard
 import fr.miage.geoevent.ui.components.atoms.RadioButton
@@ -47,12 +51,15 @@ import fr.miage.geoevent.ui.components.atoms.StatusTag
 import fr.miage.geoevent.ui.components.atoms.Switch
 import fr.miage.geoevent.ui.components.atoms.TabElement
 import fr.miage.geoevent.ui.components.atoms.TagStatus
+import fr.miage.geoevent.ui.components.atoms.TextArea
+import fr.miage.geoevent.ui.components.atoms.Toast
 import fr.miage.geoevent.ui.components.molecules.EventCard
 import fr.miage.geoevent.ui.components.molecules.EventDetailCard
 import fr.miage.geoevent.ui.components.molecules.NavBar
 import fr.miage.geoevent.ui.components.molecules.NavTab
 import fr.miage.geoevent.ui.components.molecules.ProfileCard
 import fr.miage.geoevent.ui.components.molecules.Select
+import fr.miage.geoevent.ui.components.organisms.SearchBar
 
 class MainActivity : AppCompatActivity() {
 
@@ -88,7 +95,14 @@ class MainActivity : AppCompatActivity() {
                 var switchOn by remember { mutableStateOf(false) }
                 var sliderValue by remember { mutableFloatStateOf(0.4f) }
                 var inputValue by remember { mutableStateOf("") }
+                var locationValue by remember { mutableStateOf("") }
+                var textAreaValue by remember { mutableStateOf("") }
                 var selectValue by remember { mutableStateOf<String?>(null) }
+                var imageUri by remember { mutableStateOf<Uri?>(null) }
+                var searchValue by remember { mutableStateOf("") }
+                var toastKey by remember { mutableIntStateOf(0) }
+
+                Toast(title = "Succès !", description = "Événement créé avec succès", key = toastKey)
 
                 Column(
                     modifier = Modifier
@@ -112,6 +126,25 @@ class MainActivity : AppCompatActivity() {
 
                     Section("Input")
                     Input(value = inputValue, onValueChange = { inputValue = it }, placeholder = "Saisir du texte")
+                    Input(
+                        value = locationValue,
+                        onValueChange = { locationValue = it },
+                        placeholder = "Rechercher un lieu",
+                        label = "Localisation",
+                        leadingIcon = Icons.Outlined.LocationOn,
+                    )
+
+                    HorizontalDivider()
+
+                    Section("TextArea")
+                    TextArea(
+                        value = textAreaValue,
+                        onValueChange = { textAreaValue = it },
+                        placeholder = "Décrivez votre événement...",
+                        maxLength = 500,
+                        label = "Description",
+                        required = true,
+                    )
 
                     HorizontalDivider()
 
@@ -121,6 +154,25 @@ class MainActivity : AppCompatActivity() {
                         onValueChange = { selectValue = it },
                         options = listOf("Option A", "Option B", "Option C"),
                         placeholder = "Choisir une option",
+                    )
+
+                    HorizontalDivider()
+
+                    Section("ImageUploader")
+                    ImageUploader(
+                        imageUri = imageUri,
+                        onImageSelected = { imageUri = it },
+                        label = "Image de couverture",
+                        required = true,
+                    )
+
+                    HorizontalDivider()
+
+                    Section("SearchBar")
+                    SearchBar(
+                        value = searchValue,
+                        onValueChange = { searchValue = it },
+                        placeholder = "Rechercher un événement",
                     )
 
                     HorizontalDivider()
@@ -149,6 +201,11 @@ class MainActivity : AppCompatActivity() {
                         StatusTag(status = TagStatus.SOON)
                         StatusTag(status = TagStatus.DONE)
                     }
+
+                    HorizontalDivider()
+
+                    Section("Toast")
+                    Button(text = "Afficher un toast", onClick = { toastKey++ })
 
                     HorizontalDivider()
 
