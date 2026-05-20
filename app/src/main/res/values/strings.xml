@@ -19,9 +19,6 @@
     <string name="btn_deconnexion">Se déconnecter</string>
     <string name="btn_supprimer_compte">Supprimer le compte</string>
 
-    <!-- Test -->
-    <string name="btn_test_toast">Tester Toast</string>
-
 
     <!-- Erreurs -->
     <string name="erreur_email_requis">L\'email est requis</string>
