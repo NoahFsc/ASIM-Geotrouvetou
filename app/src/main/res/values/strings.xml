@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">geoevent</string>
+    <string name="app_name">Geo Trouvetou</string>
 
     <!-- Connexion -->
     <string name="connexion_titre">Connexion</string>
