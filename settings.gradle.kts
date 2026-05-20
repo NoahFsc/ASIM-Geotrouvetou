@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "geoevent"
+rootProject.name = "GeoTrouvetou"
 include(":app")
  

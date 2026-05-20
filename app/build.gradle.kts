@@ -10,7 +10,7 @@ val properties = Properties()
 properties.load(project.rootProject.file("local.properties").inputStream())
 
 android {
-    namespace = "fr.miage.geoevent"
+    namespace = "fr.miage.geotrouvetou"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -18,7 +18,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "fr.miage.geoevent"
+        applicationId = "fr.miage.geotrouvetou"
         minSdk = 36
         targetSdk = 36
         versionCode = 1
