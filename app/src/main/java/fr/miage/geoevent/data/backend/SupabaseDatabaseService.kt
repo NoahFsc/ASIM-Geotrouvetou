@@ -70,5 +70,4 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
         // Supprime le compte dans auth.users via une fonction SQL (security definer)
         client.postgrest.rpc("delete_own_account")
     }
-
 }
