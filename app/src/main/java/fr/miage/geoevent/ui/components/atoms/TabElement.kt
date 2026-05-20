@@ -54,7 +54,7 @@ fun TabElement(
         Text(
             text = label,
             fontSize = 12.sp,
-            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+            fontWeight = FontWeight.SemiBold,
             color = color,
         )
     }
