@@ -18,11 +18,13 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
@@ -39,9 +41,11 @@ fun Input(
     modifier: Modifier = Modifier,
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null,
+    onTrailingIconClick: (() -> Unit)? = null,
     label: String? = null,
     required: Boolean = false,
-    erreur: String? = null
+    erreur: String? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (label != null) {
@@ -70,9 +74,17 @@ fun Input(
             leadingIcon = leadingIcon?.let {
                 { Icon(imageVector = it, contentDescription = null, tint = colorResource(id = R.color.text_lighter)) }
             },
-            trailingIcon = trailingIcon?.let {
-                { Icon(imageVector = it, contentDescription = null, tint = colorResource(id = R.color.text_lighter)) }
+            trailingIcon = trailingIcon?.let { icon ->
+                {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = colorResource(id = R.color.text_lighter),
+                        modifier = onTrailingIconClick?.let { Modifier.clickable(onClick = it) } ?: Modifier,
+                    )
+                }
             },
+            visualTransformation = visualTransformation,
             modifier = Modifier
                 .fillMaxWidth()
                 .border(
