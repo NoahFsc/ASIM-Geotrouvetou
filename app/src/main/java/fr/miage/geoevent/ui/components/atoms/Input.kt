@@ -12,6 +12,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -41,7 +44,9 @@ fun Input(
     trailingIcon: ImageVector? = null,
     label: String? = null,
     required: Boolean = false,
-    erreur: String? = null
+    erreur: String? = null,
+    suggestions: List<String> = emptyList(),
+    onSuggestionSelected: (String) -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (label != null) {
@@ -60,38 +65,60 @@ fun Input(
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
-        TextField(
-            value = value,
-            onValueChange = onValueChange,
-            textStyle = TextStyle(fontSize = 16.sp),
-            placeholder = {
-                Text(text = placeholder, color = colorResource(id = R.color.text_placeholder), fontSize = 16.sp)
-            },
-            leadingIcon = leadingIcon?.let {
-                { Icon(imageVector = it, contentDescription = null, tint = colorResource(id = R.color.text_lighter)) }
-            },
-            trailingIcon = trailingIcon?.let {
-                { Icon(imageVector = it, contentDescription = null, tint = colorResource(id = R.color.text_lighter)) }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    1.dp,
-                    colorResource(id = if (erreur != null) R.color.danger_500 else R.color.text_lighter),
-                    RoundedCornerShape(8.dp)
+        Box {
+            TextField(
+                value = value,
+                onValueChange = onValueChange,
+                textStyle = TextStyle(fontSize = 16.sp),
+                placeholder = {
+                    Text(text = placeholder, color = colorResource(id = R.color.text_placeholder), fontSize = 16.sp)
+                },
+                leadingIcon = leadingIcon?.let {
+                    { Icon(imageVector = it, contentDescription = null, tint = colorResource(id = R.color.text_lighter)) }
+                },
+                trailingIcon = trailingIcon?.let {
+                    { Icon(imageVector = it, contentDescription = null, tint = colorResource(id = R.color.text_lighter)) }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        1.dp,
+                        colorResource(id = if (erreur != null) R.color.danger_500 else R.color.text_lighter),
+                        RoundedCornerShape(8.dp),
+                    ),
+                shape = RoundedCornerShape(8.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    focusedTextColor = colorResource(id = R.color.text_darker),
+                    unfocusedTextColor = colorResource(id = R.color.text_darker),
                 ),
-            shape = RoundedCornerShape(8.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                focusedTextColor = colorResource(id = R.color.text_darker),
-                unfocusedTextColor = colorResource(id = R.color.text_darker),
-            ),
-            singleLine = true,
-        )
+                singleLine = true,
+            )
+            DropdownMenu(
+                expanded = suggestions.isNotEmpty(),
+                onDismissRequest = {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White),
+            ) {
+                suggestions.forEach { suggestion ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = suggestion,
+                                fontSize = 14.sp,
+                                color = colorResource(id = R.color.text_dark),
+                            )
+                        },
+                        onClick = { onSuggestionSelected(suggestion) },
+                    )
+                }
+            }
+        }
         if (erreur != null) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -228,6 +255,23 @@ private fun FillWithErrorPreview() {
             label = "Titre de l'événement",
             required = true,
             erreur = "Ce champ est requis"
+        )
+    }
+}
+
+@Preview(name = "Location – With suggestions")
+@Composable
+private fun LocationWithSuggestionsPreview() {
+    PreviewWrapper {
+        Input(
+            value = "Forêt",
+            onValueChange = {},
+            placeholder = "Rechercher un lieu",
+            label = "Localisation",
+            required = true,
+            leadingIcon = Icons.Outlined.LocationOn,
+            suggestions = listOf("Forêt de Chailluz, Besançon", "Forêt d'Ornans", "Forêt de la Joux"),
+            onSuggestionSelected = {},
         )
     }
 }
