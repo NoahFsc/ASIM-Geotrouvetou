@@ -11,17 +11,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,57 +26,53 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.miage.geoevent.R
 
-private val CheckboxSize = 44.dp
-private val CheckboxCorner = RoundedCornerShape(12.dp)
-private val RingCorner = RoundedCornerShape(16.dp)
+private val RadioSize = 44.dp
+private val InnerDotSize = 28.dp
 
 @Composable
-fun Checkbox(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
+fun RadioButton(
+    selected: Boolean,
+    onClick: () -> Unit,
     label: String,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    val primary = colorResource(R.color.primary_600)
-    val primary500 = colorResource(R.color.primary_500)
+    val primary = colorResource(R.color.primary_500)
+    val primary600 = colorResource(R.color.primary_600)
 
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Outer wrapper absorbs the ring without shifting the inner box
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(CheckboxSize + 8.dp)
+            modifier = Modifier.size(RadioSize + 8.dp)
         ) {
             if (isPressed) {
                 Box(
                     modifier = Modifier
-                        .size(CheckboxSize + 8.dp)
-                        .border(1.5.dp, primary, RingCorner)
+                        .size(RadioSize + 8.dp)
+                        .border(1.5.dp, primary600, CircleShape)
                 )
             }
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(CheckboxSize)
-                    .clip(CheckboxCorner)
-                    .background(if (checked) primary else Color.White)
-                    .border(1.5.dp, primary500, CheckboxCorner)
+                    .size(RadioSize)
+                    .border(1.5.dp, primary, CircleShape)
+                    .background(Color.White, CircleShape)
                     .clickable(
                         interactionSource = interactionSource,
                         indication = null,
-                    ) { onCheckedChange(!checked) }
+                    ) { onClick() }
             ) {
-                if (checked) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                if (selected) {
+                    Box(
+                        modifier = Modifier
+                            .size(InnerDotSize)
+                            .background(primary600, CircleShape)
                     )
                 }
             }
@@ -104,21 +96,21 @@ private fun PreviewWrapper(content: @Composable () -> Unit) {
     ) { content() }
 }
 
-@Preview(name = "Checkbox – Unchecked")
+@Preview(name = "RadioButton – Unselected")
 @Composable
-private fun CheckboxUncheckedPreview() {
+private fun RadioButtonUnselectedPreview() {
     PreviewWrapper {
-        Checkbox(checked = false, onCheckedChange = {}, label = "Texte")
+        RadioButton(selected = false, onClick = {}, label = "Texte")
     }
 }
 
-@Preview(name = "Checkbox – Checked")
+@Preview(name = "RadioButton – All States")
 @Composable
-private fun CheckboxCheckedPreview() {
+private fun RadioButtonAllStatesPreview() {
     PreviewWrapper {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Checkbox(checked = false, onCheckedChange = {}, label = "Texte")
-            Checkbox(checked = true, onCheckedChange = {}, label = "Texte")
+            RadioButton(selected = false, onClick = {}, label = "Texte")
+            RadioButton(selected = true, onClick = {}, label = "Texte")
         }
     }
 }
