@@ -1,5 +1,6 @@
 package fr.miage.geoevent.ui.map
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
