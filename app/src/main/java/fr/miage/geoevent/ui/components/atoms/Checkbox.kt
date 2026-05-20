@@ -1,4 +1,4 @@
-package fr.miage.geoevent.ui.components.atomes
+package fr.miage.geoevent.ui.components.atoms
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
