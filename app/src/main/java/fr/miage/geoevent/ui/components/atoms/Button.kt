@@ -42,6 +42,7 @@ fun Button(
     modifier: Modifier = Modifier,
     variant: ButtonVariant = ButtonVariant.Fill,
     enabled: Boolean = true,
+    fullWidth: Boolean = true,
     leftIcon: ImageVector? = null,
     rightIcon: ImageVector? = null,
 ) {
@@ -70,13 +71,13 @@ fun Button(
         onClick = onClick,
         enabled = enabled,
         interactionSource = interactionSource,
-        modifier = modifier.fillMaxWidth().height(56.dp),
+        modifier = modifier.then(if (fullWidth) Modifier.fillMaxWidth() else Modifier).height(56.dp),
         shape = ButtonShape,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,
             disabledContainerColor = if (variant == ButtonVariant.Fill) colorResource(R.color.text_light) else Color.Transparent,
-            disabledContentColor = colorResource(R.color.text_darker),
+            disabledContentColor = if (variant == ButtonVariant.Fill) colorResource(R.color.white) else colorResource(R.color.text_darker),
         ),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp,
