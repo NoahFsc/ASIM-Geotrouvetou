@@ -15,8 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fr.miage.geoevent.R
 
 enum class BadgeStatus {
     VALIDATED,
@@ -30,14 +32,14 @@ fun StatusBadge(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = when (status) {
-        BadgeStatus.VALIDATED -> Color(0xFF56A892)
-        BadgeStatus.REFUSED -> Color(0xFFFF5F57)
-        BadgeStatus.WAITING -> Color(0xFFAAB2C0)
+        BadgeStatus.VALIDATED -> colorResource(id = R.color.primary_400)
+        BadgeStatus.REFUSED -> colorResource(id = R.color.danger_400)
+        BadgeStatus.WAITING -> colorResource(id = R.color.text_placeholder)
     }
 
     Box(
         modifier = modifier
-            .size(86.dp)
+            .size(18.dp)
             .background(
                 color = backgroundColor,
                 shape = CircleShape
@@ -50,7 +52,7 @@ fun StatusBadge(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = "Validé",
                     tint = Color.White,
-                    modifier = Modifier.size(72.dp)
+                    modifier = Modifier.size(12.dp)
                 )
             }
 
@@ -59,14 +61,14 @@ fun StatusBadge(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = "Refusé",
                     tint = Color.White,
-                    modifier = Modifier.size(72.dp)
+                    modifier = Modifier.size(12.dp)
                 )
             }
 
             BadgeStatus.WAITING -> {
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(8.dp)
                         .background(
                             color = Color.White,
                             shape = CircleShape
@@ -85,11 +87,11 @@ private fun StatusBadgePreview() {
     ) {
         StatusBadge(status = BadgeStatus.VALIDATED)
 
-        Spacer(modifier = Modifier.height(140.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         StatusBadge(status = BadgeStatus.REFUSED)
 
-        Spacer(modifier = Modifier.height(140.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         StatusBadge(status = BadgeStatus.WAITING)
     }

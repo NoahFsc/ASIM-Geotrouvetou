@@ -9,27 +9,28 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.miage.geoevent.R
 
 enum class TagStatus(
     val label: String,
-    val backgroundColor: Color
+    val backgroundColorRes: Int
 ) {
     NEW(
         label = "NOUVEAU",
-        backgroundColor = Color(0xFF10B981)
+        backgroundColorRes = R.color.success_400
     ),
     SOON(
         label = "BIENTÔT",
-        backgroundColor = Color(0xFFFFA552)
+        backgroundColorRes = R.color.warning_400
     ),
     DONE(
         label = "TERMINÉ",
-        backgroundColor = Color(0xFFFF5F57)
+        backgroundColorRes = R.color.danger_400
     )
 }
 
@@ -41,21 +42,22 @@ fun StatusTag(
     Box(
         modifier = modifier
             .background(
-                color = status.backgroundColor,
-                shape = RoundedCornerShape(14.dp)
+                color = colorResource(id = status.backgroundColorRes),
+                shape = RoundedCornerShape(6.dp)
             )
             .padding(
-                horizontal = 28.dp,
-                vertical = 14.dp
+                horizontal = 10.dp,
+                vertical = 2.dp
             ),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = status.label,
-            color = Color(0xFF0F172A),
-            fontSize = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.sp
+            color = colorResource(id = R.color.text_darker),
+            fontSize = 10.sp,
+            lineHeight = 16.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.sp
         )
     }
 }
@@ -69,11 +71,11 @@ private fun StatusTagPreview() {
     ) {
         StatusTag(status = TagStatus.NEW)
 
-        Box(modifier = Modifier.padding(top = 56.dp)) {
+        Box(modifier = Modifier.padding(top = 16.dp)) {
             StatusTag(status = TagStatus.SOON)
         }
 
-        Box(modifier = Modifier.padding(top = 56.dp)) {
+        Box(modifier = Modifier.padding(top = 16.dp)) {
             StatusTag(status = TagStatus.DONE)
         }
     }
