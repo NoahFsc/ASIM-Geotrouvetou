@@ -90,7 +90,7 @@ fun Select(
             Icon(
                 imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = null,
-                tint = colorResource(R.color.text_lighter),
+                tint = colorResource(R.color.text_placeholder),
             )
         }
 
