@@ -26,11 +26,13 @@ fun Modal(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    shape: RoundedCornerShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
     content: @Composable () -> Unit
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
+        shape = shape,
         dragHandle = {
             Box(
                 modifier = Modifier
@@ -59,7 +61,7 @@ private fun ModalPreview() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
-                    .padding(24.dp)
+                    .padding(16.dp)
             ) {
                 Text(text = "Exemple de contenu pour la Modal")
             }

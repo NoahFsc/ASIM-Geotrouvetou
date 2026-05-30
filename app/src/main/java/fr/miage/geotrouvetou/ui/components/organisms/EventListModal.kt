@@ -123,8 +123,8 @@ fun EventListContent(
         modifier = modifier
             .fillMaxWidth()
             .fillMaxHeight(0.9f)
-            .padding(horizontal = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         SearchBar(
             value = searchQuery,
