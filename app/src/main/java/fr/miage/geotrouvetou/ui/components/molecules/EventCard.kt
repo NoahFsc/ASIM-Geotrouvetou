@@ -1,6 +1,7 @@
 package fr.miage.geotrouvetou.ui.components.molecules
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,7 @@ fun EventCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(colorResource(R.color.white))
+            .border(1.dp, colorResource(R.color.text_disabled), RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
