@@ -41,6 +41,7 @@ fun NavGraph(navController: NavHostController) {
 
     var selectedTab by remember { mutableStateOf(NavTab.Carte) }
     var loginToastKey by remember { mutableIntStateOf(0) }
+    var eventCreatedToastKey by remember { mutableIntStateOf(0) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -111,6 +112,7 @@ fun NavGraph(navController: NavHostController) {
                         navController.navigate(Routes.MAP) {
                             popUpTo(Routes.CREATE_EVENT) { inclusive = true }
                         }
+                        eventCreatedToastKey++
                     },
                 )
             }
@@ -121,6 +123,14 @@ fun NavGraph(navController: NavHostController) {
                 title = "Connexion réussie !",
                 description = "Bienvenue sur Geo Trouvetou",
                 key = loginToastKey,
+            )
+        }
+
+        if (eventCreatedToastKey > 0) {
+            Toast(
+                title = "Succès !",
+                description = "L'événement a été créé avec succès",
+                key = eventCreatedToastKey,
             )
         }
 
