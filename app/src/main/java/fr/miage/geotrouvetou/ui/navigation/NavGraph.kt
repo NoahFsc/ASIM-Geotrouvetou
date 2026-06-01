@@ -47,6 +47,8 @@ fun NavGraph(navController: NavHostController) {
     var selectedTab by remember { mutableStateOf(NavTab.Carte) }
     var loginToastKey by remember { mutableIntStateOf(0) }
     var eventCreatedToastKey by remember { mutableIntStateOf(0) }
+    val navBackStackEntryAsState by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntryAsState?.destination?.route
 
     fun navigateIfLoggedIn(destination: String, tab: NavTab) {
         selectedTab = tab
@@ -107,7 +109,6 @@ fun NavGraph(navController: NavHostController) {
                             popUpTo(Routes.MAP) { inclusive = true }
                         }
                     },
-                    onBackClick = { navController.popBackStack() },
                     onSettingsClick = { navController.navigate(Routes.PARAMS) },
                 )
             }
@@ -144,9 +145,6 @@ fun NavGraph(navController: NavHostController) {
                 key = loginToastKey,
             )
         }
-
-        val hideNavBar = currentRoute in setOf(Routes.LOGIN, Routes.REGISTER, Routes.PARAMS)
-        if (!hideNavBar) NavBar(
         if (eventCreatedToastKey > 0) {
             Toast(
                 title = "Succès !",
@@ -155,7 +153,8 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        NavBar(
+        val hideNavBar = currentRoute in setOf(Routes.PARAMS)
+        if (!hideNavBar) NavBar(
                 selectedTab = selectedTab,
                 onTabSelected = { tab ->
                     when (tab) {
