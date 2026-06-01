@@ -1,6 +1,7 @@
 package fr.miage.geotrouvetou.ui.components.organisms
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -39,6 +40,7 @@ fun SearchBar(
                 spotColor = Color.Black.copy(alpha = 0.12f),
             )
             .background(Color.White, SearchBarShape)
+            .border(1.dp, colorResource(R.color.text_disabled), SearchBarShape)
             .padding(horizontal = 24.dp, vertical = 16.dp),
         textStyle = TextStyle(
             fontSize = 16.sp,
