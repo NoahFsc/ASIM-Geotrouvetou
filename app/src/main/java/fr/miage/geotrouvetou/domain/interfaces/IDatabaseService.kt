@@ -9,6 +9,7 @@ interface IDatabaseService {
     suspend fun getAllEvents(): List<Evenement>
     fun listenToEventsRealtime(): Flow<List<Evenement>>
     suspend fun uploadImage(fileName: String, bytes: ByteArray): String
+    suspend fun getProfile(userId: String): User?
     suspend fun createProfile(user: User)
     suspend fun deleteProfile(userId: String)
 }

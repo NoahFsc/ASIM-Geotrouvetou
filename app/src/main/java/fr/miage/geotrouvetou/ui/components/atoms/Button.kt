@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.miage.geotrouvetou.R
 
-enum class ButtonVariant { Fill, Ghost }
+enum class ButtonVariant { Fill, Ghost, GhostDark }
 
 private val ButtonShape = RoundedCornerShape(10.dp)
 
@@ -55,7 +55,8 @@ fun Button(
             isPressed -> colorResource(R.color.primary_400)
             else -> colorResource(R.color.primary_500)
         }
-        ButtonVariant.Ghost -> if (isPressed) colorResource(R.color.primary_transparent) else Color.Transparent
+        ButtonVariant.Ghost, ButtonVariant.GhostDark ->
+            if (isPressed) colorResource(R.color.primary_transparent) else Color.Transparent
     }
 
     val contentColor = when (variant) {
@@ -65,6 +66,7 @@ fun Button(
             isPressed -> colorResource(R.color.primary_400)
             else -> colorResource(R.color.primary_500)
         }
+        ButtonVariant.GhostDark -> colorResource(R.color.text_darker)
     }
 
     Button(
@@ -89,7 +91,12 @@ fun Button(
             Icon(imageVector = leftIcon, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
         }
-        Text(text = text, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = if (leftIcon != null && rightIcon != null) Modifier.weight(1f) else Modifier,
+        )
         if (rightIcon != null) {
             Spacer(modifier = Modifier.width(8.dp))
             Icon(imageVector = rightIcon, contentDescription = null, modifier = Modifier.size(20.dp))
