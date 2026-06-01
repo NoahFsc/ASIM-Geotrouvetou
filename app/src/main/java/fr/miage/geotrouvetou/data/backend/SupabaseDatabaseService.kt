@@ -2,8 +2,8 @@ package fr.miage.geotrouvetou.data.backend
 
 import fr.miage.geotrouvetou.domain.interfaces.IDatabaseService
 import fr.miage.geotrouvetou.domain.models.Evenement
-import fr.miage.geotrouvetou.utils.ImageHelper
 import fr.miage.geotrouvetou.domain.models.User
+import fr.miage.geotrouvetou.utils.ImageHelper
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.realtime.PostgresAction
@@ -36,6 +36,24 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
 
     override suspend fun getAllEvents(): List<Evenement> {
         return client.postgrest[tableName].select().decodeList<Evenement>()
+    }
+
+    override suspend fun getEventsByVisibleBounds(
+        minLat: Double,
+        maxLat: Double,
+        minLon: Double,
+        maxLon: Double
+    ): List<Evenement> {
+        return client.postgrest[tableName]
+            .select {
+                filter {
+                    gte("latitude", minLat)
+                    lte("latitude", maxLat)
+                    gte("longitude", minLon)
+                    lte("longitude", maxLon)
+                }
+            }
+            .decodeList<Evenement>()
     }
 
     /**

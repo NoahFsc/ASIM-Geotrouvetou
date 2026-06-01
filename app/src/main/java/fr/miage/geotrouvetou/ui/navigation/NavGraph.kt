@@ -1,5 +1,6 @@
 package fr.miage.geotrouvetou.ui.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -11,11 +12,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import fr.miage.geotrouvetou.App
+import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.ui.components.atoms.Toast
 import fr.miage.geotrouvetou.ui.auth.LoginScreen
 import fr.miage.geotrouvetou.ui.auth.RegisterScreen
@@ -39,17 +42,19 @@ object Routes {
 @Composable
 fun NavGraph(navController: NavHostController) {
     val context = LocalContext.current
-    val supabase = (context.applicationContext as App).supabase
+    val app = context.applicationContext as? App
 
     var selectedTab by remember { mutableStateOf(NavTab.Carte) }
     var loginToastKey by remember { mutableIntStateOf(0) }
-
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    var eventCreatedToastKey by remember { mutableIntStateOf(0) }
 
     fun navigateIfLoggedIn(destination: String, tab: NavTab) {
         selectedTab = tab
-        if (supabase.auth.currentSessionOrNull() != null) {
+        val isLoggedIn = runCatching {
+            app?.supabase?.auth?.currentSessionOrNull() != null
+        }.getOrDefault(false)
+
+        if (isLoggedIn) {
             navController.navigate(destination)
         } else {
             navController.navigate(Routes.LOGIN)
@@ -99,7 +104,7 @@ fun NavGraph(navController: NavHostController) {
                     onLogout = {
                         selectedTab = NavTab.Carte
                         navController.navigate(Routes.MAP) {
-                            popUpTo(0) { inclusive = true }
+                            popUpTo(Routes.MAP) { inclusive = true }
                         }
                     },
                     onBackClick = { navController.popBackStack() },
@@ -126,6 +131,7 @@ fun NavGraph(navController: NavHostController) {
                         navController.navigate(Routes.MAP) {
                             popUpTo(Routes.CREATE_EVENT) { inclusive = true }
                         }
+                        eventCreatedToastKey++
                     },
                 )
             }
@@ -141,6 +147,15 @@ fun NavGraph(navController: NavHostController) {
 
         val hideNavBar = currentRoute in setOf(Routes.LOGIN, Routes.REGISTER, Routes.PARAMS)
         if (!hideNavBar) NavBar(
+        if (eventCreatedToastKey > 0) {
+            Toast(
+                title = "Succès !",
+                description = "L'événement a été créé avec succès",
+                key = eventCreatedToastKey,
+            )
+        }
+
+        NavBar(
                 selectedTab = selectedTab,
                 onTabSelected = { tab ->
                     when (tab) {
@@ -155,7 +170,9 @@ fun NavGraph(navController: NavHostController) {
                         NavTab.Ajouter -> navigateIfLoggedIn(Routes.CREATE_EVENT, NavTab.Ajouter)
                     }
                 },
-                modifier = Modifier.navigationBarsPadding(),
+                modifier = Modifier
+                    .background(colorResource(R.color.white))
+                    .navigationBarsPadding(),
             )
     }
 }
