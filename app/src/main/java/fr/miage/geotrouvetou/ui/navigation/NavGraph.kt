@@ -37,17 +37,18 @@ object Routes {
 @Composable
 fun NavGraph(navController: NavHostController) {
     val context = LocalContext.current
-    val supabase = (context.applicationContext as App).supabase
+    val app = context.applicationContext as? App
 
     var selectedTab by remember { mutableStateOf(NavTab.Carte) }
     var loginToastKey by remember { mutableIntStateOf(0) }
 
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-
     fun navigateIfLoggedIn(destination: String, tab: NavTab) {
         selectedTab = tab
-        if (supabase.auth.currentSessionOrNull() != null) {
+        val isLoggedIn = runCatching {
+            app?.supabase?.auth?.currentSessionOrNull() != null
+        }.getOrDefault(false)
+
+        if (isLoggedIn) {
             navController.navigate(destination)
         } else {
             navController.navigate(Routes.LOGIN)
@@ -97,7 +98,7 @@ fun NavGraph(navController: NavHostController) {
                     onLogout = {
                         selectedTab = NavTab.Carte
                         navController.navigate(Routes.MAP) {
-                            popUpTo(0) { inclusive = true }
+                            popUpTo(Routes.MAP) { inclusive = true }
                         }
                     },
                     onBackClick = { navController.popBackStack() },

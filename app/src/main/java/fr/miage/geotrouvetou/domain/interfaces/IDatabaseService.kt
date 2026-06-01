@@ -11,4 +11,5 @@ interface IDatabaseService {
     suspend fun uploadImage(fileName: String, bytes: ByteArray): String
     suspend fun createProfile(user: User)
     suspend fun deleteProfile(userId: String)
+    suspend fun getEventsByVisibleBounds(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double): List<Evenement>
 }
