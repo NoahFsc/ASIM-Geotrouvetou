@@ -2,6 +2,7 @@ package fr.miage.geotrouvetou.ui.components.atoms
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +57,8 @@ fun Input(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     suggestions: List<String> = emptyList(),
     onSuggestionSelected: (String) -> Unit = {},
+    readOnly: Boolean = false,
+    onClick: (() -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         if (label != null) {
@@ -81,10 +84,12 @@ fun Input(
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
-        Box {
+        Box(modifier = if (onClick != null) Modifier.clickable { onClick() } else Modifier) {
             TextField(
                 value = value,
                 onValueChange = onValueChange,
+                readOnly = readOnly || onClick != null,
+                enabled = onClick == null,
                 textStyle = TextStyle(fontSize = 16.sp),
                 placeholder = {
                     Text(text = placeholder, color = colorResource(id = R.color.text_placeholder), fontSize = 16.sp)

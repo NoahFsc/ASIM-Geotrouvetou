@@ -22,6 +22,10 @@ class CreateEventViewModel(
 
     var title by mutableStateOf("")
     var description by mutableStateOf("")
+    var date by mutableStateOf("")
+    var time by mutableStateOf("")
+    var location by mutableStateOf("")
+    var isPrivate by mutableStateOf(false)
     var imageUri by mutableStateOf<Uri?>(null)
     var isLoading by mutableStateOf(false)
         private set
@@ -33,7 +37,7 @@ class CreateEventViewModel(
     val error = _error.asSharedFlow()
 
     val isFormValid: Boolean
-        get() = title.isNotBlank() && description.isNotBlank() && !isLoading
+        get() = title.isNotBlank() && description.isNotBlank() && date.isNotBlank() && time.isNotBlank() && location.isNotBlank() && imageUri != null && !isLoading
 
     fun createEvent(imageBytes: ByteArray?) {
         viewModelScope.launch {
@@ -53,6 +57,16 @@ class CreateEventViewModel(
                     imageUrl = databaseService.uploadImage(fileName, imageBytes)
                 }
 
+                // Formatage de la date pour la BDD (ISO 8601 recommandé)
+                // On suppose que date est au format dd/MM/yyyy et time au format HH:mm
+                val formattedDate = try {
+                    val dateParts = date.split("/")
+                    val timeParts = time.split(":")
+                    "${dateParts[2]}-${dateParts[1]}-${dateParts[0]}T${timeParts[0]}:${timeParts[1]}:00Z"
+                } catch (e: Exception) {
+                    null
+                }
+
                 val newEvent = Evenement(
                     id = eventUniqueId,
                     title = title,
@@ -60,7 +74,9 @@ class CreateEventViewModel(
                     latitude = 49.8887,
                     longitude = 2.2858,
                     image_url = imageUrl,
-                    user_id = user.id
+                    user_id = user.id,
+                    visibility = !isPrivate,
+                    event_date = formattedDate
                 )
 
                 databaseService.addEvent(newEvent)
