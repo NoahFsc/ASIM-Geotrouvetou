@@ -38,8 +38,8 @@ private val RingCorner = RoundedCornerShape(16.dp)
 fun Checkbox(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    label: String,
     modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -51,7 +51,6 @@ fun Checkbox(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // L'enveloppe externe absorbe le halo de focus sans décaler le contenu intérieur
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.size(CheckboxSize + 8.dp)
@@ -85,7 +84,18 @@ fun Checkbox(
                 }
             }
         }
+        content()
+    }
+}
 
+@Composable
+fun Checkbox(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Checkbox(checked = checked, onCheckedChange = onCheckedChange, modifier = modifier) {
         Text(
             text = label,
             fontSize = 16.sp,
