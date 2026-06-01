@@ -201,7 +201,14 @@ class OSMMapService(private val context: Context) : IMapService {
 
     private fun getMarkerIcon(): BitmapDrawable {
         cachedMarkerIcon?.let { return it }
-        return createFallbackIcon().also { cachedMarkerIcon = it }
+        val composeIcon = createMarkerIcon()
+        if (composeIcon != null) {
+            cachedMarkerIcon = composeIcon
+            Log.d("OSMMapService", "Marker icon rendered from Compose MarkerIcon")
+            return composeIcon
+        }
+        Log.w("OSMMapService", "Using temporary fallback icon (compose not ready yet)")
+        return createFallbackIcon()
     }
 
     // Crée une icône Compose; renvoie null si le rendu Compose n'est pas prêt/possible.
@@ -283,14 +290,38 @@ class OSMMapService(private val context: Context) : IMapService {
         val radius = center - stroke
         val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             style = android.graphics.Paint.Style.FILL
-            color = android.graphics.Color.parseColor("#4CAF50")
+            color = context.getColor(fr.miage.geotrouvetou.R.color.primary_400)
         }
         val border = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             style = android.graphics.Paint.Style.STROKE
             color = android.graphics.Color.WHITE
             strokeWidth = stroke
         }
+        val flagPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            style = android.graphics.Paint.Style.FILL
+            color = context.getColor(fr.miage.geotrouvetou.R.color.primary_600)
+        }
+        val flagStemPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            style = android.graphics.Paint.Style.STROKE
+            color = android.graphics.Color.WHITE
+            strokeWidth = stroke * 0.8f
+            strokeCap = android.graphics.Paint.Cap.ROUND
+        }
+        val flagPath = android.graphics.Path().apply {
+            moveTo(center - sizePx * 0.10f, center - sizePx * 0.18f)
+            lineTo(center + sizePx * 0.12f, center - sizePx * 0.10f)
+            lineTo(center - sizePx * 0.03f, center + sizePx * 0.02f)
+            close()
+        }
         canvas.drawCircle(center, center, radius, fill)
+        canvas.drawPath(flagPath, flagPaint)
+        canvas.drawLine(
+            center - sizePx * 0.05f,
+            center - sizePx * 0.20f,
+            center - sizePx * 0.05f,
+            center + sizePx * 0.12f,
+            flagStemPaint,
+        )
         canvas.drawCircle(center, center, radius, border)
         return BitmapDrawable(context.resources, bitmap).also {
             it.setBounds(0, 0, bitmap.width, bitmap.height)
