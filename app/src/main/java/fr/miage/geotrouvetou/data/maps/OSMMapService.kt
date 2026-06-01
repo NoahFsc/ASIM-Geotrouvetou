@@ -38,7 +38,6 @@ class OSMMapService(private val context: Context) : IMapService {
     private lateinit var mapView: MapView
     private lateinit var controller: IMapController
     private var myLocationOverlay: MyLocationNewOverlay? = null
-    // Cache de l'icône circulaire pour réutilisation
     private var cachedMarkerIcon: BitmapDrawable? = null
     private var onViewBoundsChanged: ((MapBounds) -> Unit)? = null
     private var minimumWidthKm = 20.0
@@ -68,6 +67,7 @@ class OSMMapService(private val context: Context) : IMapService {
             isDrawAccuracyEnabled = true
         }
         mapView.overlays.add(myLocationOverlay)
+        mapView.setBuiltInZoomControls(false)
 
         mapView.addMapListener(object : MapListener {
             override fun onScroll(event: ScrollEvent?): Boolean {
@@ -117,6 +117,7 @@ class OSMMapService(private val context: Context) : IMapService {
         val overlay = myLocationOverlay ?: return
         overlay.enableMyLocation()
         overlay.enableFollowLocation()
+
         if (onFirstFix != null) {
             overlay.runOnFirstFix {
                 mapView.post {

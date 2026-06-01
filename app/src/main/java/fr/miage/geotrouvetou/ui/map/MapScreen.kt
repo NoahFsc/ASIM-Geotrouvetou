@@ -6,8 +6,18 @@ import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -18,10 +28,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -30,8 +42,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.data.maps.OSMMapService
 import fr.miage.geotrouvetou.domain.interfaces.MapBounds
+import fr.miage.geotrouvetou.ui.components.atoms.RoundIconButton
+import fr.miage.geotrouvetou.ui.components.organisms.EventListModal
+import fr.miage.geotrouvetou.ui.components.organisms.SearchBar
 import org.osmdroid.views.MapView
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Suppress("DEPRECATION")
 @Composable
 fun MapScreen(
@@ -48,6 +64,7 @@ fun MapScreen(
     var mapBound by rememberSaveable { mutableStateOf(false) }
     var locationPermissionGranted by rememberSaveable { mutableStateOf(hasLocationPermission(context)) }
     var locationFlowStarted by rememberSaveable { mutableStateOf(false) }
+    var showEventList by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions(),
@@ -141,6 +158,64 @@ fun MapScreen(
         if (uiState.isLoading) {
             Text(text = "Chargement des événements…")
         }
+
+        // Top-left: center on self
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .statusBarsPadding()
+                .padding(16.dp),
+        ) {
+            RoundIconButton(
+                icon = Icons.Filled.MyLocation,
+                contentDescription = "Centrer sur ma position",
+                onClick = {
+                    val loc = uiState.currentLocation ?: return@RoundIconButton
+                    val zoom = mapService.getZoomForWidth(20.0, loc.first)
+                    mapService.centerOn(loc.first, loc.second, zoom)
+                },
+            )
+        }
+
+        // Top-right: zoom in / zoom out
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            RoundIconButton(
+                icon = Icons.Filled.Add,
+                contentDescription = "Zoom avant",
+                onClick = { mapView.controller.zoomIn() },
+            )
+            RoundIconButton(
+                icon = Icons.Filled.Remove,
+                contentDescription = "Zoom arrière",
+                onClick = { mapView.controller.zoomOut() },
+            )
+        }
+
+        // Bottom-center: search bar opening the event list modal
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+        ) {
+            SearchBar(
+                value = "",
+                onValueChange = {},
+                placeholder = "Rechercher par lieu",
+                onClick = { showEventList = true },
+            )
+        }
+    }
+
+    if (showEventList) {
+        EventListModal(onDismissRequest = { showEventList = false })
     }
 }
 

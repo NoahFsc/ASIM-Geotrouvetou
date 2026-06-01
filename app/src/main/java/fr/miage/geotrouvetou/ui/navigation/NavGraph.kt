@@ -1,5 +1,6 @@
 package fr.miage.geotrouvetou.ui.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -11,11 +12,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import fr.miage.geotrouvetou.App
+import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.ui.components.atoms.Toast
 import fr.miage.geotrouvetou.ui.auth.LoginScreen
 import fr.miage.geotrouvetou.ui.auth.RegisterScreen
@@ -140,7 +143,9 @@ fun NavGraph(navController: NavHostController) {
                         NavTab.Ajouter -> navigateIfLoggedIn(Routes.CREATE_EVENT, NavTab.Ajouter)
                     }
                 },
-                modifier = Modifier.navigationBarsPadding(),
+                modifier = Modifier
+                    .background(colorResource(R.color.white))
+                    .navigationBarsPadding(),
             )
     }
 }
