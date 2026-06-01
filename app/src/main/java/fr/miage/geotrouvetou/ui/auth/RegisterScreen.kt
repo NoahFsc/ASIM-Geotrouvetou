@@ -16,7 +16,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,8 +40,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import fr.miage.geotrouvetou.R
+import fr.miage.geotrouvetou.ui.auth.modals.PasswordInfoModal
 import fr.miage.geotrouvetou.ui.components.atoms.Button
+import fr.miage.geotrouvetou.ui.components.atoms.Checkbox
 import fr.miage.geotrouvetou.ui.components.atoms.Input
 
 @Composable
@@ -53,6 +61,9 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmVisible by remember { mutableStateOf(false) }
+    var nom by remember { mutableStateOf("") }
+    var prenom by remember { mutableStateOf("") }
+    var showPasswordInfo by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.navigateToMain) {
         if (uiState.navigateToMain) {
@@ -104,6 +115,24 @@ fun RegisterScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Input(
+                    value = nom,
+                    onValueChange = { nom = it.replaceFirstChar { c -> c.uppercaseChar() } },
+                    placeholder = "Dupont",
+                    label = "Nom",
+                    required = true,
+                    modifier = Modifier.weight(1f),
+                )
+                Input(
+                    value = prenom,
+                    onValueChange = { prenom = it.replaceFirstChar { c -> c.uppercaseChar() } },
+                    placeholder = "Patrick",
+                    label = "Prénom",
+                    required = true,
+                    modifier = Modifier.weight(1f),
+                )
+            }
             Input(
                 value = email,
                 onValueChange = { email = it },
@@ -111,7 +140,6 @@ fun RegisterScreen(
                 label = "Adresse email",
                 required = true,
             )
-
             Input(
                 value = password,
                 onValueChange = { password = it },
@@ -121,6 +149,16 @@ fun RegisterScreen(
                 trailingIcon = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                 onTrailingIconClick = { passwordVisible = !passwordVisible },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                labelTrailingContent = {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = "Règles du mot de passe",
+                        tint = colorResource(R.color.text_lighter),
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clickable { showPasswordInfo = true },
+                    )
+                },
             )
 
             Input(
@@ -133,6 +171,26 @@ fun RegisterScreen(
                 onTrailingIconClick = { confirmVisible = !confirmVisible },
                 visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
             )
+            Checkbox(
+                checked = uiState.termsAccepted,
+                onCheckedChange = { viewModel.onTermsAcceptedChange(it) },
+            ) {
+                val danger = colorResource(R.color.danger_500)
+                Text(
+                    text = buildAnnotatedString {
+                        append("J'accepte les ")
+                        withStyle(SpanStyle(textDecoration = TextDecoration.Underline, color = colorResource(R.color.primary_600))) {
+                            append("Conditions d'Utilisations")
+                        }
+                        withStyle(SpanStyle(color = danger)) {
+                            append("*")
+                        }
+                    },
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colorResource(R.color.text_darker),
+                )
+            }
         }
 
         if (uiState.error != null) {
@@ -144,16 +202,25 @@ fun RegisterScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(30.dp))
+
+        val formValid = nom.isNotBlank() && prenom.isNotBlank() &&
+            email.isNotBlank() && password.isNotBlank() &&
+            confirmPassword.isNotBlank() && uiState.termsAccepted
 
         if (uiState.isLoading) {
             CircularProgressIndicator(color = colorResource(R.color.primary_500))
         } else {
             Button(
                 text = "S'inscrire",
-                onClick = { viewModel.register(email, password, confirmPassword) },
+                onClick = { viewModel.register(email, password, confirmPassword, nom, prenom) },
                 fullWidth = true,
+                enabled = formValid,
             )
         }
+    }
+
+    if (showPasswordInfo) {
+        PasswordInfoModal(onDismiss = { showPasswordInfo = false })
     }
 }
