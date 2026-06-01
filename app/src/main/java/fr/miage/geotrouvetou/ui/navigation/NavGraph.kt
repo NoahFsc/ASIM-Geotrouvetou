@@ -26,6 +26,7 @@ import fr.miage.geotrouvetou.ui.components.molecules.NavBar
 import fr.miage.geotrouvetou.ui.components.molecules.NavTab
 import fr.miage.geotrouvetou.ui.events.CreateEventScreen
 import fr.miage.geotrouvetou.ui.map.MapScreen
+import fr.miage.geotrouvetou.ui.params.ParamsScreen
 import fr.miage.geotrouvetou.ui.profile.ProfileScreen
 import io.github.jan.supabase.auth.auth
 
@@ -34,6 +35,7 @@ object Routes {
     const val REGISTER = "register"
     const val MAP = "map"
     const val PROFILE = "profile"
+    const val PARAMS = "params"
     const val CREATE_EVENT = "createEvent"
 }
 
@@ -106,6 +108,19 @@ fun NavGraph(navController: NavHostController) {
                         }
                     },
                     onBackClick = { navController.popBackStack() },
+                    onSettingsClick = { navController.navigate(Routes.PARAMS) },
+                )
+            }
+
+            composable(Routes.PARAMS) {
+                ParamsScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onLogout = {
+                        selectedTab = NavTab.Carte
+                        navController.navigate(Routes.MAP) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
                 )
             }
 
@@ -130,6 +145,8 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
+        val hideNavBar = currentRoute in setOf(Routes.LOGIN, Routes.REGISTER, Routes.PARAMS)
+        if (!hideNavBar) NavBar(
         if (eventCreatedToastKey > 0) {
             Toast(
                 title = "Succès !",

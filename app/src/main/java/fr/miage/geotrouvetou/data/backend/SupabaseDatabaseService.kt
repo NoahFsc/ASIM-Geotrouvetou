@@ -73,6 +73,12 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
         }
     }
 
+    override suspend fun getProfile(userId: String): User? {
+        return client.postgrest["profiles"].select {
+            filter { eq("id", userId) }
+        }.decodeSingleOrNull<User>()
+    }
+
     override suspend fun createProfile(user: User) {
         client.postgrest["profiles"].insert(user)
     }
