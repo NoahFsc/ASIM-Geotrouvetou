@@ -70,8 +70,8 @@ fun EventDetailModal(
 @Composable
 fun EventDetailModal(
     onDismissRequest: () -> Unit,
-    onBackClick: () -> Unit,
     event: Evenement,
+    onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
@@ -86,8 +86,8 @@ fun EventDetailModal(
 
 @Composable
 fun EvenementDetailContent(
-    onBackClick: () -> Unit,
     event: Evenement,
+    onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val date = event.event_date?.substringBefore('T') ?: "—"
@@ -109,21 +109,26 @@ fun EvenementDetailContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.clickable(onClick = onBackClick),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = null,
-                    tint = colorResource(R.color.text_darker),
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    text = "Retour",
-                    fontSize = 16.sp,
-                    color = colorResource(R.color.text_darker)
-                )
+            if (onBackClick != null) {
+                Row(
+                    modifier = Modifier.clickable(onClick = onBackClick),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = null,
+                        tint = colorResource(R.color.text_darker),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = "Retour",
+                        fontSize = 16.sp,
+                        color = colorResource(R.color.text_darker)
+                    )
+                }
+            } else {
+                // Espace vide pour garder le bouton "Rejoindre" à droite
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier)
             }
 
             Button(

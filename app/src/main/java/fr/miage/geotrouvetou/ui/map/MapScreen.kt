@@ -218,8 +218,7 @@ fun MapScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
+                .padding(horizontal = 16.dp),
         ) {
             SearchBar(
                 value = "",
@@ -233,8 +232,8 @@ fun MapScreen(
     when {
         selectedEvent != null -> EventDetailModal(
             event = selectedEvent!!,
-            onDismissRequest = { selectedEvent = null },
-            onBackClick = { selectedEvent = null }
+            onDismissRequest = { selectedEvent = null }
+            // onBackClick omis → bouton retour masqué (ouverture depuis la map)
         )
         clusterEvents != null -> EventListModal(
             events = clusterEvents!!,

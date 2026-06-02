@@ -13,6 +13,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import androidx.core.content.ContextCompat
 import android.graphics.Bitmap
@@ -45,8 +46,8 @@ class OSMMapService(private val context: Context) : IMapService {
     private var clusterOverlay: RadiusMarkerClusterer? = null
     private var onEventClick: ((Evenement) -> Unit)? = null
     private var onClusterClick: ((List<Evenement>) -> Unit)? = null
-    private var cachedMarkerIcon: BitmapDrawable? = null
-    private var cachedClusterIcon: Bitmap? = null
+    private var cachedMarkerIcon: BitmapDrawable? = null  // invalidé si la taille change
+    private var cachedClusterIcon: Bitmap? = null         // invalidé si la taille change
     private var onViewBoundsChanged: ((MapBounds) -> Unit)? = null
     private var minimumWidthKm = 20.0
     private var minimumZoomNeedsInitialization = true
@@ -74,7 +75,7 @@ class OSMMapService(private val context: Context) : IMapService {
         clusterOverlay = buildClusterOverlay()
         mapView.overlays.add(clusterOverlay)
 
-        myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), mapView).apply {
+        myLocationOverlay = PersonLocationOverlay(GpsMyLocationProvider(context), mapView).apply {
             isDrawAccuracyEnabled = true
         }
         mapView.overlays.add(myLocationOverlay)
@@ -247,7 +248,7 @@ class OSMMapService(private val context: Context) : IMapService {
     private fun getClusterIcon(): Bitmap {
         cachedClusterIcon?.let { return it }
         val sizePx = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP, 48f, context.resources.displayMetrics
+            TypedValue.COMPLEX_UNIT_DIP, 40f, context.resources.displayMetrics
         ).toInt()
         val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -304,7 +305,7 @@ class OSMMapService(private val context: Context) : IMapService {
     }
 
     private fun createMarkerIconInternal(): BitmapDrawable? {
-        val sizeDp = 48
+        val sizeDp = 40
         val sizePx = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             sizeDp.toFloat(),
@@ -398,6 +399,21 @@ class OSMMapService(private val context: Context) : IMapService {
         canvas.drawCircle(center, center, radius, border)
         return BitmapDrawable(context.resources, bitmap).also {
             it.setBounds(0, 0, bitmap.width, bitmap.height)
+        }
+    }
+
+    /**
+     * Overlay de localisation qui affiche toujours le bonhomme, même quand le GPS
+     * fournit un cap — en remplaçant la flèche de direction par l'icône personnage.
+     */
+    private inner class PersonLocationOverlay(
+        provider: IMyLocationProvider,
+        mapView: MapView
+    ) : MyLocationNewOverlay(provider, mapView) {
+        init {
+            // mDirectionArrowBitmap est protected dans MyLocationNewOverlay ;
+            // on le remplace par mPersonBitmap pour ne jamais afficher la flèche blanche.
+            mDirectionArrowBitmap = mPersonBitmap
         }
     }
 
