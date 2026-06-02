@@ -45,6 +45,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.ui.auth.modals.PasswordInfoModal
+import fr.miage.geotrouvetou.utils.PasswordValidation
+import fr.miage.geotrouvetou.utils.UserFieldValidator
 import fr.miage.geotrouvetou.ui.components.atoms.Button
 import fr.miage.geotrouvetou.ui.components.atoms.Checkbox
 import fr.miage.geotrouvetou.ui.components.atoms.Input
@@ -118,7 +120,7 @@ fun RegisterScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Input(
                     value = nom,
-                    onValueChange = { nom = it.replaceFirstChar { c -> c.uppercaseChar() } },
+                    onValueChange = { nom = UserFieldValidator.capitalizeFirst(it) },
                     placeholder = "Dupont",
                     label = "Nom",
                     required = true,
@@ -126,7 +128,7 @@ fun RegisterScreen(
                 )
                 Input(
                     value = prenom,
-                    onValueChange = { prenom = it.replaceFirstChar { c -> c.uppercaseChar() } },
+                    onValueChange = { prenom = UserFieldValidator.capitalizeFirst(it) },
                     placeholder = "Patrick",
                     label = "Prénom",
                     required = true,
@@ -170,6 +172,7 @@ fun RegisterScreen(
                 trailingIcon = if (confirmVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                 onTrailingIconClick = { confirmVisible = !confirmVisible },
                 visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                erreur = PasswordValidation.confirmError(password, confirmPassword),
             )
             Checkbox(
                 checked = uiState.termsAccepted,
@@ -204,8 +207,9 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        val formValid = nom.isNotBlank() && prenom.isNotBlank() &&
-            email.isNotBlank() && password.isNotBlank() &&
+        val formValid = UserFieldValidator.isNomValid(nom) && UserFieldValidator.isPrenomValid(prenom) &&
+            UserFieldValidator.isEmailValid(email) && password.isNotBlank() &&
+            PasswordValidation.confirmError(password, confirmPassword) == null &&
             confirmPassword.isNotBlank() && uiState.termsAccepted
 
         if (uiState.isLoading) {

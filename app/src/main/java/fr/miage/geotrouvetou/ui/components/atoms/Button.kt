@@ -1,5 +1,6 @@
 package fr.miage.geotrouvetou.ui.components.atoms
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -31,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.miage.geotrouvetou.R
 
-enum class ButtonVariant { Fill, Ghost, GhostDark }
+enum class ButtonVariant { Fill, Ghost, GhostDark, GhostDanger, FillDanger }
 
 private val ButtonShape = RoundedCornerShape(10.dp)
 
@@ -55,19 +56,26 @@ fun Button(
             isPressed -> colorResource(R.color.primary_400)
             else -> colorResource(R.color.primary_500)
         }
-        ButtonVariant.Ghost, ButtonVariant.GhostDark ->
+        ButtonVariant.FillDanger -> colorResource(R.color.danger_500)
+        ButtonVariant.Ghost, ButtonVariant.GhostDark, ButtonVariant.GhostDanger ->
             if (isPressed) colorResource(R.color.primary_transparent) else Color.Transparent
     }
 
     val contentColor = when (variant) {
         ButtonVariant.Fill -> if (!enabled) colorResource(R.color.text_darker) else colorResource(R.color.white)
+        ButtonVariant.FillDanger -> colorResource(R.color.white)
         ButtonVariant.Ghost -> when {
             !enabled -> colorResource(R.color.text_darker)
             isPressed -> colorResource(R.color.primary_400)
             else -> colorResource(R.color.primary_500)
         }
         ButtonVariant.GhostDark -> colorResource(R.color.text_darker)
+        ButtonVariant.GhostDanger -> colorResource(R.color.danger_500)
     }
+
+    val border = if (variant == ButtonVariant.GhostDanger) {
+        BorderStroke(1.5.dp, colorResource(R.color.danger_500))
+    } else null
 
     Button(
         onClick = onClick,
@@ -75,6 +83,7 @@ fun Button(
         interactionSource = interactionSource,
         modifier = modifier.then(if (fullWidth) Modifier.fillMaxWidth() else Modifier).height(56.dp),
         shape = ButtonShape,
+        border = border,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,
