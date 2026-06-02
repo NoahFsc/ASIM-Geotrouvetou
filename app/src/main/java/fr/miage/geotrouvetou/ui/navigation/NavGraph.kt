@@ -139,6 +139,7 @@ fun NavGraph(navController: NavHostController) {
                     },
                     onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
                     onEditPasswordClick = { navController.navigate(Routes.EDIT_PASSWORD) },
+                    onAdminClick = { navController.navigate(Routes.ADMIN) },
                 )
             }
 
@@ -165,7 +166,6 @@ fun NavGraph(navController: NavHostController) {
                         }
                         deleteAccountToastKey++
                     },
-                    onAdminClick = { navController.navigate(Routes.ADMIN) },
                 )
             }
 
