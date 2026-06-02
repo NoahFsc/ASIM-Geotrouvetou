@@ -62,19 +62,18 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
     }
 
     /**
-     * Ouvre un canal de communication temps réel pour écouter les modifications de la table 'events'.
+     * Émet Unit à chaque changement sur la table 'events'.
+     * Le caller (MapViewModel) appelle scheduleRefresh() pour recharger
+     * selon les bounds courantes — on n'appelle plus getAllEvents() ici.
      */
-    override fun listenToEventsRealtime(): Flow<List<Evenement>> {
+    override fun listenToEventsRealtime(): Flow<Unit> {
         val channel = client.realtime.channel("public-events")
 
         return channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = tableName
-        }.map {
-            // Recharge la liste complète à chaque modification pour assurer la cohérence
-            getAllEvents()
-        }.onStart {
+        }.map { Unit }.onStart {
             channel.subscribe()
-            emit(getAllEvents()) // Émet la liste initiale dès l'abonnement
+            emit(Unit) // Déclenche un premier chargement dès l'abonnement
         }
     }
 

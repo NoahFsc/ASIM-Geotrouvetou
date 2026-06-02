@@ -2,6 +2,7 @@ package fr.miage.geotrouvetou.data.geocoding
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -56,8 +57,17 @@ data class NominatimPlace(
     }
 }
 
+/**
+ * Singleton app-scoped : acceptable sur Android car le processus est tué avec l'app.
+ * Le pool de connexions OkHttp est borné (5 connexions max par défaut).
+ */
 object NominatimService {
-    private val client = HttpClient(OkHttp)
+    private val client = HttpClient(OkHttp) {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 8_000
+            connectTimeoutMillis = 5_000
+        }
+    }
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun search(query: String, limit: Int = 8): List<NominatimPlace> {

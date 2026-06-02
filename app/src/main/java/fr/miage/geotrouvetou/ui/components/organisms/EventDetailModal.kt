@@ -41,6 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.domain.models.Evenement
@@ -90,6 +92,7 @@ fun EvenementDetailContent(
     onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val date = event.event_date?.substringBefore('T') ?: "—"
     val time = event.event_date?.let { if ('T' in it) it.substringAfter('T').take(5) else null } ?: "—"
     val imageUrl = event.image_url

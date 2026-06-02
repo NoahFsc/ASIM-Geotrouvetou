@@ -24,7 +24,7 @@ fun MarkerIcon(
 ) {
     MaterialTheme {
         val bgColor = colorResource(id = R.color.primary_400)
-        val flagColor = colorResource(id = R.color.primary_600)
+        val flagColor = colorResource(id = R.color.white)
 
         Box(
             modifier = Modifier

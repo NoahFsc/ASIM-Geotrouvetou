@@ -47,7 +47,6 @@ import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.SegmentedControl
 import fr.miage.geotrouvetou.ui.components.organisms.EventHistoryModal
-import fr.miage.geotrouvetou.ui.components.organisms.EventListModal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +57,6 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showHistory by remember { mutableStateOf(false) }
-    var showEventList by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.navigateToLogin) {
         if (uiState.navigateToLogin) {
@@ -204,9 +202,6 @@ fun ProfileScreen(
 
     if (showHistory) {
         EventHistoryModal(onDismissRequest = { showHistory = false })
-    }
-    if (showEventList) {
-        EventListModal(events = emptyList(), onDismissRequest = { showEventList = false })
     }
 }
 

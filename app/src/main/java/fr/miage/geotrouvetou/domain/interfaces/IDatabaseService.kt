@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.Flow
 interface IDatabaseService {
     suspend fun addEvent(event: Evenement)
     suspend fun getAllEvents(): List<Evenement>
-    fun listenToEventsRealtime(): Flow<List<Evenement>>
+    /** Émet Unit à chaque changement en base. Le caller décide quoi recharger. */
+    fun listenToEventsRealtime(): Flow<Unit>
     suspend fun uploadImage(fileName: String, bytes: ByteArray): String
     suspend fun getProfile(userId: String): User?
     suspend fun createProfile(user: User)

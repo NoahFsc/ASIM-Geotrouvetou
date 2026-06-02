@@ -44,7 +44,9 @@ import fr.miage.geotrouvetou.data.geocoding.NominatimService
 import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.TagStatus
 import fr.miage.geotrouvetou.ui.components.molecules.EventCard
-import java.time.LocalDate
+import fr.miage.geotrouvetou.ui.utils.formattedDate
+import fr.miage.geotrouvetou.ui.utils.formattedTime
+import fr.miage.geotrouvetou.ui.utils.tagStatus
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -253,28 +255,6 @@ private fun PlaceResultCard(
         )
     }
 }
-
-// ---- Helpers Evenement → UI ----
-
-fun Evenement.tagStatus(): TagStatus {
-    val dateStr = event_date ?: return TagStatus.NEW
-    return try {
-        val eventDate = LocalDate.parse(dateStr.substringBefore('T'))
-        val today = LocalDate.now()
-        when {
-            eventDate.isBefore(today) -> TagStatus.DONE
-            eventDate.isBefore(today.plusDays(7)) -> TagStatus.SOON
-            else -> TagStatus.NEW
-        }
-    } catch (e: Exception) {
-        TagStatus.NEW
-    }
-}
-
-fun Evenement.formattedDate(): String = event_date?.substringBefore('T') ?: "—"
-
-fun Evenement.formattedTime(): String =
-    event_date?.let { if ('T' in it) it.substringAfter('T').take(5) else null } ?: "—"
 
 // ---- Kept for EventHistoryModal compatibility ----
 
