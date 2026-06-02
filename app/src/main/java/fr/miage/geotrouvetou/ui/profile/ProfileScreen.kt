@@ -137,6 +137,7 @@ fun ProfileScreen(
 
     if (showEventList) {
         EventListModal(
+            events = emptyList(),
             onDismissRequest = { showEventList = false }
         )
     }

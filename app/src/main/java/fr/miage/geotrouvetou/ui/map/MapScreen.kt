@@ -42,7 +42,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.data.maps.OSMMapService
 import fr.miage.geotrouvetou.domain.interfaces.MapBounds
+import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.RoundIconButton
+import fr.miage.geotrouvetou.ui.components.organisms.EventDetailModal
 import fr.miage.geotrouvetou.ui.components.organisms.EventListModal
 import fr.miage.geotrouvetou.ui.components.organisms.SearchBar
 import org.osmdroid.views.MapView
@@ -65,6 +67,8 @@ fun MapScreen(
     var locationPermissionGranted by rememberSaveable { mutableStateOf(hasLocationPermission(context)) }
     var locationFlowStarted by rememberSaveable { mutableStateOf(false) }
     var showEventList by remember { mutableStateOf(false) }
+    var clusterEvents by remember { mutableStateOf<List<Evenement>?>(null) }
+    var selectedEvent by remember { mutableStateOf<Evenement?>(null) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions(),
@@ -83,8 +87,20 @@ fun MapScreen(
         mapService.setOnViewBoundsChangedListener { bounds: MapBounds ->
             viewModel.onViewBoundsChanged(bounds)
         }
+        mapService.setOnEventClickListener { event ->
+            clusterEvents = null
+            showEventList = false
+            selectedEvent = event
+        }
+        mapService.setOnClusterClickListener { events ->
+            selectedEvent = null
+            showEventList = false
+            clusterEvents = events
+        }
         mapBound = true
         onDispose {
+            mapService.setOnEventClickListener(null)
+            mapService.setOnClusterClickListener(null)
             mapService.onPause()
         }
     }
@@ -214,8 +230,27 @@ fun MapScreen(
         }
     }
 
-    if (showEventList) {
-        EventListModal(onDismissRequest = { showEventList = false })
+    when {
+        selectedEvent != null -> EventDetailModal(
+            event = selectedEvent!!,
+            onDismissRequest = { selectedEvent = null },
+            onBackClick = { selectedEvent = null }
+        )
+        clusterEvents != null -> EventListModal(
+            events = clusterEvents!!,
+            title = "Groupement (${clusterEvents!!.size})",
+            onDismissRequest = { clusterEvents = null }
+        )
+        showEventList -> EventListModal(
+            events = uiState.events,
+            title = "Propositions (${uiState.events.size})",
+            onDismissRequest = { showEventList = false },
+            onPlaceSelected = { lat, lon ->
+                showEventList = false
+                val zoom = mapService.getZoomForWidth(20.0, lat)
+                mapService.centerOn(lat, lon, zoom)
+            }
+        )
     }
 }
 

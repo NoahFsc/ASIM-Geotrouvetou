@@ -26,4 +26,8 @@ interface IMapService {
     fun setOnViewBoundsChangedListener(listener: ((MapBounds) -> Unit)?)
     // Contraint le zoom minimum pour que la largeur visible soit d'au moins widthKm
     fun setMinimumZoomForWidth(widthKm: Double)
+    // Appelé quand l'utilisateur tape sur un marker individuel
+    fun setOnEventClickListener(listener: ((Evenement) -> Unit)?)
+    // Appelé quand l'utilisateur tape sur un cluster
+    fun setOnClusterClickListener(listener: ((List<Evenement>) -> Unit)?)
 }
