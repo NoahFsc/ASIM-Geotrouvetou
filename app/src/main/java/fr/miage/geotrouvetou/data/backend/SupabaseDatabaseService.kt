@@ -50,29 +50,33 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
         return client.postgrest[tableName]
             .select {
                 filter {
-                    gte("latitude", minLat)
-                    lte("latitude", maxLat)
-                    gte("longitude", minLon)
-                    lte("longitude", maxLon)
+                    // Les 4 conditions sur 2 colonnes doivent être dans un and {}
+                    // sinon supabase-kt écrase les clés dupliquées dans sa Map de paramètres
+                    // et seule la première condition par colonne (gte) serait envoyée.
+                    and {
+                        gte("latitude", minLat)
+                        lte("latitude", maxLat)
+                        gte("longitude", minLon)
+                        lte("longitude", maxLon)
+                    }
                 }
             }
             .decodeList<Evenement>()
     }
 
     /**
-     * Ouvre un canal de communication temps réel pour écouter les modifications de la table 'events'.
+     * Émet Unit à chaque changement sur la table 'events'.
+     * Le caller (MapViewModel) appelle scheduleRefresh() pour recharger
+     * selon les bounds courantes — on n'appelle plus getAllEvents() ici.
      */
-    override fun listenToEventsRealtime(): Flow<List<Evenement>> {
+    override fun listenToEventsRealtime(): Flow<Unit> {
         val channel = client.realtime.channel("public-events")
 
         return channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = tableName
-        }.map {
-            // Recharge la liste complète à chaque modification pour assurer la cohérence
-            getAllEvents()
-        }.onStart {
+        }.map { Unit }.onStart {
             channel.subscribe()
-            emit(getAllEvents()) // Émet la liste initiale dès l'abonnement
+            emit(Unit) // Déclenche un premier chargement dès l'abonnement
         }
     }
 

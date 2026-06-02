@@ -51,7 +51,6 @@ import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.SegmentedControl
 import fr.miage.geotrouvetou.ui.components.organisms.EventHistoryModal
-import fr.miage.geotrouvetou.ui.components.organisms.EventListModal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +61,6 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showHistory by remember { mutableStateOf(false) }
-    var showEventList by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -217,9 +215,6 @@ fun ProfileScreen(
 
     if (showHistory) {
         EventHistoryModal(onDismissRequest = { showHistory = false })
-    }
-    if (showEventList) {
-        EventListModal(onDismissRequest = { showEventList = false })
     }
 }
 

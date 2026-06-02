@@ -13,10 +13,13 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import androidx.core.content.ContextCompat
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.util.TypedValue
 import android.os.Looper
@@ -29,6 +32,8 @@ import fr.miage.geotrouvetou.domain.interfaces.IMapService
 import fr.miage.geotrouvetou.domain.interfaces.MapBounds
 import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.MarkerIcon
+import org.osmdroid.bonuspack.clustering.RadiusMarkerClusterer
+import org.osmdroid.bonuspack.clustering.StaticCluster
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.max
@@ -38,7 +43,12 @@ class OSMMapService(private val context: Context) : IMapService {
     private lateinit var mapView: MapView
     private lateinit var controller: IMapController
     private var myLocationOverlay: MyLocationNewOverlay? = null
-    private var cachedMarkerIcon: BitmapDrawable? = null
+    private var clusterOverlay: RadiusMarkerClusterer? = null
+    private var onEventClick: ((Evenement) -> Unit)? = null
+    private var onClusterClick: ((List<Evenement>) -> Unit)? = null
+    private var displayedEventIds: Set<String?> = emptySet()
+    private var cachedMarkerIcon: BitmapDrawable? = null  // invalidé si la taille change
+    private var cachedClusterIcon: Bitmap? = null         // invalidé si la taille change
     private var onViewBoundsChanged: ((MapBounds) -> Unit)? = null
     private var minimumWidthKm = 20.0
     private var minimumZoomNeedsInitialization = true
@@ -63,7 +73,10 @@ class OSMMapService(private val context: Context) : IMapService {
         controller.setZoom(3.0)
         controller.setCenter(GeoPoint(20.0, 0.0))
 
-        myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), mapView).apply {
+        clusterOverlay = buildClusterOverlay()
+        mapView.overlays.add(clusterOverlay)
+
+        myLocationOverlay = PersonLocationOverlay(GpsMyLocationProvider(context), mapView).apply {
             isDrawAccuracyEnabled = true
         }
         mapView.overlays.add(myLocationOverlay)
@@ -100,7 +113,6 @@ class OSMMapService(private val context: Context) : IMapService {
         }
         if (hasLocationPermission()) {
             myLocationOverlay?.enableMyLocation()
-            myLocationOverlay?.enableFollowLocation()
         }
     }
 
@@ -116,7 +128,6 @@ class OSMMapService(private val context: Context) : IMapService {
 
         val overlay = myLocationOverlay ?: return
         overlay.enableMyLocation()
-        overlay.enableFollowLocation()
 
         if (onFirstFix != null) {
             overlay.runOnFirstFix {
@@ -158,6 +169,7 @@ class OSMMapService(private val context: Context) : IMapService {
         if (!this::mapView.isInitialized) return
         mapView.post {
             addMarkerInternal(event)
+            clusterOverlay?.invalidate()
             mapView.invalidate()
         }
     }
@@ -165,18 +177,32 @@ class OSMMapService(private val context: Context) : IMapService {
     override fun displayEvents(events: List<Evenement>) {
         if (!this::mapView.isInitialized) return
         val snapshot = events.toList()
+
+        // Court-circuit : si la liste d'events n'a pas changé, pas besoin de reconstruire le cluster
+        val newIds = snapshot.map { it.id }.toSet()
+        if (newIds == displayedEventIds) return
+        displayedEventIds = newIds
+
         val generation = ++displayGeneration
         mapView.post {
             if (generation != displayGeneration) return@post
-            mapView.overlays.removeAll { it is Marker }
-            snapshot.forEach { event ->
-                addMarkerInternal(event)
-            }
+
+            // Remplace le cluster overlay existant par un nouveau (osmbonuspack n'expose pas de clear())
+            mapView.overlays.removeAll { it is RadiusMarkerClusterer }
+            val newCluster = buildClusterOverlay()
+            clusterOverlay = newCluster
+
+            snapshot.forEach { event -> addMarkerInternal(event) }
+
+            // Insérer à l'index 0 pour que myLocationOverlay reste au-dessus
+            mapView.overlays.add(0, newCluster)
+            newCluster.invalidate()
             mapView.invalidate()
         }
     }
 
     private fun addMarkerInternal(event: Evenement) {
+        val cluster = clusterOverlay ?: return
         val marker = Marker(mapView).apply {
             position = GeoPoint(event.latitude, event.longitude)
             // L'icône est circulaire, donc on la centre pour éviter un décalage visuel sur les bords.
@@ -189,9 +215,63 @@ class OSMMapService(private val context: Context) : IMapService {
             }
             title = event.title
             snippet = event.description
+            relatedObject = event
+            infoWindow = null
+            setOnMarkerClickListener { _, _ ->
+                onEventClick?.invoke(event)
+                true
+            }
         }
         Log.d("OSMMapService", "Adding marker at ${event.latitude}, ${event.longitude} with title='${event.title}'")
-        mapView.overlays.add(marker)
+        cluster.add(marker)
+    }
+
+    private fun buildClusterOverlay(): RadiusMarkerClusterer = ClusterMarkerOverlay().apply {
+        setRadius(100)
+        setIcon(getClusterIcon())
+    }
+
+    private inner class ClusterMarkerOverlay : RadiusMarkerClusterer(context) {
+        override fun buildClusterMarker(cluster: StaticCluster, mapView: MapView): Marker {
+            val marker = super.buildClusterMarker(cluster, mapView)
+            marker.setOnMarkerClickListener { _, _ ->
+                val events = (0 until cluster.size)
+                    .mapNotNull { cluster.getItem(it).relatedObject as? Evenement }
+                if (events.isNotEmpty()) onClusterClick?.invoke(events)
+                true
+            }
+            return marker
+        }
+    }
+
+    override fun setOnEventClickListener(listener: ((Evenement) -> Unit)?) {
+        onEventClick = listener
+    }
+
+    override fun setOnClusterClickListener(listener: ((List<Evenement>) -> Unit)?) {
+        onClusterClick = listener
+    }
+
+    private fun getClusterIcon(): Bitmap {
+        cachedClusterIcon?.let { return it }
+        val sizePx = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 40f, context.resources.displayMetrics
+        ).toInt()
+        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val center = sizePx / 2f
+        val stroke = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3f, context.resources.displayMetrics)
+        val radius = center - stroke
+        canvas.drawCircle(center, center, radius, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = context.getColor(fr.miage.geotrouvetou.R.color.primary_400)
+        })
+        canvas.drawCircle(center, center, radius, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            color = Color.WHITE
+            strokeWidth = stroke
+        })
+        return bitmap.also { cachedClusterIcon = it }
     }
 
     private fun hasLocationPermission(): Boolean {
@@ -232,7 +312,7 @@ class OSMMapService(private val context: Context) : IMapService {
     }
 
     private fun createMarkerIconInternal(): BitmapDrawable? {
-        val sizeDp = 48
+        val sizeDp = 40
         val sizePx = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             sizeDp.toFloat(),
@@ -326,6 +406,21 @@ class OSMMapService(private val context: Context) : IMapService {
         canvas.drawCircle(center, center, radius, border)
         return BitmapDrawable(context.resources, bitmap).also {
             it.setBounds(0, 0, bitmap.width, bitmap.height)
+        }
+    }
+
+    /**
+     * Overlay de localisation qui affiche toujours le bonhomme, même quand le GPS
+     * fournit un cap — en remplaçant la flèche de direction par l'icône personnage.
+     */
+    private inner class PersonLocationOverlay(
+        provider: IMyLocationProvider,
+        mapView: MapView
+    ) : MyLocationNewOverlay(provider, mapView) {
+        init {
+            // mDirectionArrowBitmap est protected dans MyLocationNewOverlay ;
+            // on le remplace par mPersonBitmap pour ne jamais afficher la flèche blanche.
+            mDirectionArrowBitmap = mPersonBitmap
         }
     }
 
@@ -428,7 +523,10 @@ class OSMMapService(private val context: Context) : IMapService {
     }
 
     private fun hasSignificantBoundsChange(previous: MapBounds, current: MapBounds): Boolean {
-        val epsilon = 1e-4
+        // Seuil minimal pour filtrer le bruit de flottant uniquement.
+        // Le vrai rate-limiting est assuré par le debounce(250ms) dans le ViewModel —
+        // un seuil plus large causait des non-unload sur les bords droit/haut.
+        val epsilon = 1e-6
         return abs(previous.minLat - current.minLat) > epsilon ||
                 abs(previous.maxLat - current.maxLat) > epsilon ||
                 abs(previous.minLon - current.minLon) > epsilon ||
