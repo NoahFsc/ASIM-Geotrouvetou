@@ -1,4 +1,4 @@
-package fr.miage.geotrouvetou.ui.components.organisms
+package fr.miage.geotrouvetou.ui.map.modals
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -59,7 +59,7 @@ fun EventDetailModal(
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
-    Modal(
+    _root_ide_package_.fr.miage.geotrouvetou.ui.components.organisms.Modal(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         modifier = modifier
@@ -228,7 +228,7 @@ fun EventDetailContent(
             }
 
             Button(
-                text = "Rejoindre",
+                text = "Enregistrer",
                 onClick = {},
                 leftIcon = Icons.Default.Add,
                 fullWidth = false,

@@ -1,4 +1,4 @@
-package fr.miage.geotrouvetou.ui.components.organisms
+package fr.miage.geotrouvetou.ui.map.modals
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -37,7 +37,7 @@ fun EventHistoryModal(
 ) {
     var selectedEvent by remember { mutableStateOf<EventProposal?>(null) }
 
-    Modal(
+    _root_ide_package_.fr.miage.geotrouvetou.ui.components.organisms.Modal(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         modifier = modifier
@@ -130,7 +130,7 @@ fun EventHistoryContent(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        SearchBar(
+        _root_ide_package_.fr.miage.geotrouvetou.ui.components.organisms.SearchBar(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             placeholder = "Choisir votre destination"

@@ -30,6 +30,7 @@ import fr.miage.geotrouvetou.ui.admin.AdminScreen
 import fr.miage.geotrouvetou.ui.profile.EditPasswordScreen
 import fr.miage.geotrouvetou.ui.profile.EditProfileScreen
 import fr.miage.geotrouvetou.ui.events.CreateEventScreen
+import fr.miage.geotrouvetou.ui.events.EventDetailScreen
 import fr.miage.geotrouvetou.ui.map.MapScreen
 import fr.miage.geotrouvetou.ui.params.ParamsScreen
 import fr.miage.geotrouvetou.ui.profile.ProfileScreen
@@ -45,6 +46,7 @@ object Routes {
     const val EDIT_PROFILE = "editProfile"
     const val EDIT_PASSWORD = "editPassword"
     const val CREATE_EVENT = "createEvent"
+    const val EVENT_DETAIL = "eventDetail"
 }
 
 @Composable
@@ -118,6 +120,17 @@ fun NavGraph(navController: NavHostController) {
                         }
                     },
                     onSettingsClick = { navController.navigate(Routes.PARAMS) },
+                    onEventClick = { eventId ->
+                        navController.navigate("${Routes.EVENT_DETAIL}/$eventId")
+                    }
+                )
+            }
+
+            composable("${Routes.EVENT_DETAIL}/{eventId}") { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId")
+                EventDetailScreen(
+                    eventId = eventId,
+                    onBackClick = { navController.popBackStack() }
                 )
             }
 

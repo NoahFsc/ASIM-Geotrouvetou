@@ -4,6 +4,7 @@ import fr.miage.geotrouvetou.domain.interfaces.IDatabaseService
 import fr.miage.geotrouvetou.domain.models.AdminStats
 import fr.miage.geotrouvetou.domain.models.AuditLogEntry
 import fr.miage.geotrouvetou.domain.models.Evenement
+import fr.miage.geotrouvetou.domain.models.EventParticipant
 import fr.miage.geotrouvetou.domain.models.User
 import io.github.jan.supabase.postgrest.query.Order
 import fr.miage.geotrouvetou.utils.ImageHelper
@@ -128,6 +129,28 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
         }
         // Supprime le compte dans auth.users via une fonction SQL (security definer)
         client.postgrest.rpc("delete_own_account")
+    }
+
+    override suspend fun joinEvent(eventId: String, userId: String) {
+        client.postgrest["event_participants"].insert(EventParticipant(eventId, userId))
+    }
+
+    override suspend fun isUserParticipating(eventId: String, userId: String): Boolean {
+        return client.postgrest["event_participants"].select {
+            filter {
+                eq("event_id", eventId)
+                eq("profile_id", userId)
+            }
+        }.decodeList<EventParticipant>().isNotEmpty()
+    }
+
+    override suspend fun getParticipantsCount(eventId: String): Int {
+        val response = client.postgrest["event_participants"].select {
+            filter {
+                eq("event_id", eventId)
+            }
+        }.decodeList<EventParticipant>()
+        return response.size
     }
 
     // ── Admin ────────────────────────────────────────────────────────────────

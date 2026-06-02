@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,13 +51,16 @@ import coil.compose.AsyncImage
 import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.SegmentedControl
-import fr.miage.geotrouvetou.ui.components.organisms.EventHistoryModal
+import fr.miage.geotrouvetou.ui.components.atoms.StatCard
+import fr.miage.geotrouvetou.ui.components.molecules.ProfileEventItem
+import fr.miage.geotrouvetou.ui.map.modals.EventHistoryModal
+import fr.miage.geotrouvetou.ui.map.modals.EventListModal
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
     onSettingsClick: () -> Unit = {},
+    onEventClick: (String) -> Unit = {},
     viewModel: ProfileViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -77,6 +81,25 @@ fun ProfileScreen(
             viewModel.onNavigationHandled()
         }
     }
+
+    ProfileContent(
+        uiState = uiState,
+        onSettingsClick = onSettingsClick,
+        onTabSelected = { viewModel.onTabSelected(it) },
+        onEventClick = onEventClick
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileContent(
+    uiState: ProfileUiState,
+    onSettingsClick: () -> Unit,
+    onTabSelected: (ProfileTab) -> Unit,
+    onEventClick: (String) -> Unit
+) {
+    var showHistory by remember { mutableStateOf(false) }
+    var showEventList by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -168,7 +191,7 @@ fun ProfileScreen(
             SegmentedControl(
                 tabs = listOf("Mes événements", "Mes participations"),
                 selectedIndex = uiState.selectedTab.ordinal,
-                onTabSelected = { viewModel.onTabSelected(ProfileTab.entries[it]) },
+                onTabSelected = { onTabSelected(ProfileTab.entries[it]) },
             )
 
             // Content
@@ -188,7 +211,10 @@ fun ProfileScreen(
                                 )
                             } else {
                                 uiState.events.forEach { event ->
-                                    ProfileEventItem(event = event, onClick = {})
+                                    ProfileEventItem(
+                                        event = event,
+                                        onClick = { event.id?.let { onEventClick(it) } }
+                                    )
                                 }
                             }
                         }
@@ -218,98 +244,26 @@ fun ProfileScreen(
     }
 }
 
-
+@Preview(showBackground = true)
 @Composable
-private fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(colorResource(R.color.primary_transparent))
-            .padding(vertical = 16.dp, horizontal = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = value,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = colorResource(R.color.primary_600),
-        )
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = colorResource(R.color.text_light),
-            letterSpacing = 1.sp,
-        )
-    }
-}
-
-@Composable
-private fun ProfileEventItem(event: Evenement, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        AsyncImage(
-            model = event.image_url,
-            contentDescription = event.title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(colorResource(R.color.text_disabled)),
-        )
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(
-                text = event.title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(R.color.text_darker),
+fun ProfileScreenPreview() {
+    ProfileContent(
+        uiState = ProfileUiState(
+            fullName = "Maxime MIAGE",
+            avatarUrl = null,
+            isLoading = false,
+            events = listOf(
+                Evenement(
+                    id = "1",
+                    title = "Randonnée Forêt",
+                    description = "Une petite marche",
+                    latitude = 0.0,
+                    longitude = 0.0
+                )
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.DirectionsWalk,
-                        contentDescription = null,
-                        tint = colorResource(R.color.text_lighter),
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Text("— km", fontSize = 13.sp, color = colorResource(R.color.text_lighter))
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.AccessTime,
-                        contentDescription = null,
-                        tint = colorResource(R.color.text_lighter),
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Text("—", fontSize = 13.sp, color = colorResource(R.color.text_lighter))
-                }
-            }
-        }
-
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-            contentDescription = null,
-            tint = colorResource(R.color.text_darker),
-            modifier = Modifier.size(20.dp),
-        )
-    }
+        ),
+        onSettingsClick = {},
+        onTabSelected = {},
+        onEventClick = {}
+    )
 }
