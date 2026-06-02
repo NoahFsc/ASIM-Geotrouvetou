@@ -46,6 +46,7 @@ import fr.miage.geotrouvetou.ui.components.atoms.ButtonVariant
 fun ParamsScreen(
     onBackClick: () -> Unit,
     onLogout: () -> Unit,
+    onAdminClick: () -> Unit = {},
     viewModel: ParamViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -105,12 +106,14 @@ fun ParamsScreen(
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val items = listOf(
-                    Triple(Icons.Outlined.Edit, "Modifier mon profil", {}),
-                    Triple(Icons.Outlined.Key, "Modifier mon mot de passe", {}),
-                    Triple(Icons.Outlined.FilterHdr, "Modifier mes préférences", {}),
-                    Triple(Icons.Outlined.Build, "Administration", {}),
-                )
+                val items = buildList {
+                    add(Triple(Icons.Outlined.Edit, "Modifier mon profil", {}))
+                    add(Triple(Icons.Outlined.Key, "Modifier mon mot de passe", {}))
+                    add(Triple(Icons.Outlined.FilterHdr, "Modifier mes préférences", {}))
+                    if (uiState.isAdmin) {
+                        add(Triple(Icons.Outlined.Build, "Administration", onAdminClick))
+                    }
+                }
                 items.forEach { (icon, label, action) ->
                     Box(
                         modifier = Modifier

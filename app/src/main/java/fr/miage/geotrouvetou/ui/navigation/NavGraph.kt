@@ -1,5 +1,7 @@
 package fr.miage.geotrouvetou.ui.navigation
 
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +26,7 @@ import fr.miage.geotrouvetou.ui.auth.LoginScreen
 import fr.miage.geotrouvetou.ui.auth.RegisterScreen
 import fr.miage.geotrouvetou.ui.components.molecules.NavBar
 import fr.miage.geotrouvetou.ui.components.molecules.NavTab
+import fr.miage.geotrouvetou.ui.admin.AdminScreen
 import fr.miage.geotrouvetou.ui.events.CreateEventScreen
 import fr.miage.geotrouvetou.ui.map.MapScreen
 import fr.miage.geotrouvetou.ui.params.ParamsScreen
@@ -36,6 +39,7 @@ object Routes {
     const val MAP = "map"
     const val PROFILE = "profile"
     const val PARAMS = "params"
+    const val ADMIN = "admin"
     const val CREATE_EVENT = "createEvent"
 }
 
@@ -113,7 +117,13 @@ fun NavGraph(navController: NavHostController) {
                 )
             }
 
-            composable(Routes.PARAMS) {
+            composable(
+                route = Routes.PARAMS,
+                enterTransition = { slideInHorizontally { it } },
+                exitTransition = { slideOutHorizontally { -it } },
+                popEnterTransition = { slideInHorizontally { -it } },
+                popExitTransition = { slideOutHorizontally { it } },
+            ) {
                 ParamsScreen(
                     onBackClick = { navController.popBackStack() },
                     onLogout = {
@@ -122,7 +132,18 @@ fun NavGraph(navController: NavHostController) {
                             popUpTo(0) { inclusive = true }
                         }
                     },
+                    onAdminClick = { navController.navigate(Routes.ADMIN) },
                 )
+            }
+
+            composable(
+                route = Routes.ADMIN,
+                enterTransition = { slideInHorizontally { it } },
+                exitTransition = { slideOutHorizontally { -it } },
+                popEnterTransition = { slideInHorizontally { -it } },
+                popExitTransition = { slideOutHorizontally { it } },
+            ) {
+                AdminScreen(onBackClick = { navController.popBackStack() })
             }
 
             composable(Routes.CREATE_EVENT) {
@@ -153,7 +174,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        val hideNavBar = currentRoute in setOf(Routes.PARAMS)
+        val hideNavBar = currentRoute in setOf(Routes.PARAMS, Routes.ADMIN)
         if (!hideNavBar) NavBar(
                 selectedTab = selectedTab,
                 onTabSelected = { tab ->

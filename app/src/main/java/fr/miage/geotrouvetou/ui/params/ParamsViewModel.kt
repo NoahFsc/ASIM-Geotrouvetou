@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 
 data class ParamsUiState(
     val isLoading: Boolean = false,
+    val isAdmin: Boolean = false,
     val error: String? = null,
     val navigateToLogin: Boolean = false,
 )
@@ -19,9 +20,18 @@ data class ParamsUiState(
 class ParamViewModel(application: Application) : AndroidViewModel(application) {
 
     private val supabase get() = getApplication<App>().supabase
+    private val databaseService get() = getApplication<App>().databaseService
 
     private val _uiState = MutableStateFlow(ParamsUiState())
     val uiState: StateFlow<ParamsUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val userId = supabase.auth.currentUserOrNull()?.id ?: return@launch
+            val profile = runCatching { databaseService.getProfile(userId) }.getOrNull()
+            _uiState.value = _uiState.value.copy(isAdmin = profile?.role == "admin")
+        }
+    }
 
     fun signOut() {
         viewModelScope.launch {

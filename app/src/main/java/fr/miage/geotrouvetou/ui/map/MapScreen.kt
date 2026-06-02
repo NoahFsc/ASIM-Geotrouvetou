@@ -126,11 +126,6 @@ fun MapScreen(
                 mapService.centerOn(point.latitude, point.longitude, defaultZoom)
                 mapService.setMinimumZoomForWidth(20.0)
                 viewModel.onFirstLocationFound(point.latitude, point.longitude)
-                Toast.makeText(
-                    context,
-                    "Position trouvée: ${point.latitude}, ${point.longitude}",
-                    Toast.LENGTH_SHORT,
-                ).show()
             }
         }
     }

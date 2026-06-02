@@ -11,8 +11,9 @@ data class Evenement(
     val longitude: Double,
     val image_url: String? = null,
     val user_id: String? = null,
-    val visibility: Boolean = true,
     val event_date: String? = null,
     // created_at est géré automatiquement par la BDD
-    val created_at: String? = null
+    val created_at: String? = null,
+    // true = public, false = privé (owner only)
+    val visibility: Boolean = true,
 )
