@@ -47,10 +47,15 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
         return client.postgrest[tableName]
             .select {
                 filter {
-                    gte("latitude", minLat)
-                    lte("latitude", maxLat)
-                    gte("longitude", minLon)
-                    lte("longitude", maxLon)
+                    // Les 4 conditions sur 2 colonnes doivent être dans un and {}
+                    // sinon supabase-kt écrase les clés dupliquées dans sa Map de paramètres
+                    // et seule la première condition par colonne (gte) serait envoyée.
+                    and {
+                        gte("latitude", minLat)
+                        lte("latitude", maxLat)
+                        gte("longitude", minLon)
+                        lte("longitude", maxLon)
+                    }
                 }
             }
             .decodeList<Evenement>()

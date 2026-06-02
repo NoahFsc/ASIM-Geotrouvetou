@@ -111,7 +111,6 @@ class OSMMapService(private val context: Context) : IMapService {
         }
         if (hasLocationPermission()) {
             myLocationOverlay?.enableMyLocation()
-            myLocationOverlay?.enableFollowLocation()
         }
     }
 
@@ -127,7 +126,6 @@ class OSMMapService(private val context: Context) : IMapService {
 
         val overlay = myLocationOverlay ?: return
         overlay.enableMyLocation()
-        overlay.enableFollowLocation()
 
         if (onFirstFix != null) {
             overlay.runOnFirstFix {
@@ -502,7 +500,10 @@ class OSMMapService(private val context: Context) : IMapService {
     }
 
     private fun hasSignificantBoundsChange(previous: MapBounds, current: MapBounds): Boolean {
-        val epsilon = 1e-4
+        // Seuil minimal pour filtrer le bruit de flottant uniquement.
+        // Le vrai rate-limiting est assuré par le debounce(250ms) dans le ViewModel —
+        // un seuil plus large causait des non-unload sur les bords droit/haut.
+        val epsilon = 1e-6
         return abs(previous.minLat - current.minLat) > epsilon ||
                 abs(previous.maxLat - current.maxLat) > epsilon ||
                 abs(previous.minLon - current.minLon) > epsilon ||

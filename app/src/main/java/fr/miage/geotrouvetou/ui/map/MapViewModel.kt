@@ -93,7 +93,14 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             val service = databaseService ?: return@launch
-            loadEventsAroundLocation(service, latitude, longitude)
+            // Si les bounds de l'écran sont déjà connues (la map était prête avant le fix GPS),
+            // on charge uniquement les events visibles. Sinon on replie sur le rayon 20km.
+            val bounds = _uiState.value.visibleBounds
+            if (bounds != null) {
+                loadEventsByBounds(service, bounds)
+            } else {
+                loadEventsAroundLocation(service, latitude, longitude)
+            }
         }
     }
 

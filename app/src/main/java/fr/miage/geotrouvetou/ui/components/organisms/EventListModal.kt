@@ -225,13 +225,25 @@ private fun PlaceResultCard(
                 tint = colorResource(R.color.primary_400),
                 modifier = Modifier.size(20.dp)
             )
-            Text(
-                text = place.displayName,
-                fontSize = 14.sp,
-                color = colorResource(R.color.text_darker),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = place.mainLine,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = colorResource(R.color.text_darker),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (place.countryLine.isNotBlank()) {
+                    Text(
+                        text = place.countryLine,
+                        fontSize = 12.sp,
+                        color = colorResource(R.color.text_light),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
