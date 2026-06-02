@@ -1,0 +1,41 @@
+package fr.miage.geotrouvetou.ui.params
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import fr.miage.geotrouvetou.App
+import io.github.jan.supabase.auth.auth
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+data class ParamsUiState(
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val navigateToLogin: Boolean = false,
+)
+
+class ParamViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val supabase get() = getApplication<App>().supabase
+
+    private val _uiState = MutableStateFlow(ParamsUiState())
+    val uiState: StateFlow<ParamsUiState> = _uiState.asStateFlow()
+
+    fun signOut() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            try {
+                supabase.auth.signOut()
+                _uiState.value = _uiState.value.copy(navigateToLogin = true)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = "Erreur lors de la déconnexion")
+            }
+        }
+    }
+
+    fun onNavigationHandled() {
+        _uiState.value = _uiState.value.copy(navigateToLogin = false)
+    }
+}

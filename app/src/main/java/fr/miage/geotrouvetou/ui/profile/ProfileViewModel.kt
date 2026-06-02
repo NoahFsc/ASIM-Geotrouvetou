@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.miage.geotrouvetou.App
+import fr.miage.geotrouvetou.domain.models.Evenement
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,9 +12,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+enum class ProfileTab { MesEvenements, MesParticipations }
+
 data class ProfileUiState(
     val email: String = "",
-    val isLoading: Boolean = false,
+    val fullName: String = "",
+    val avatarUrl: String? = null,
+    val events: List<Evenement> = emptyList(),
+    val selectedTab: ProfileTab = ProfileTab.MesEvenements,
+    val isLoading: Boolean = true,
     val error: String? = null,
     val navigateToLogin: Boolean = false,
 )
@@ -30,40 +37,37 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             supabase.auth.sessionStatus.collect { status ->
                 if (status is SessionStatus.Authenticated) {
+                    val userId = status.session.user?.id ?: return@collect
                     _uiState.value = _uiState.value.copy(email = status.session.user?.email ?: "")
+                    loadProfile(userId)
+                    loadEvents(userId)
                 }
             }
         }
     }
 
-    fun signOut() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            try {
-                supabase.auth.signOut()
-                _uiState.value = ProfileUiState(navigateToLogin = true)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = "Erreur lors de la déconnexion")
-            }
+    private suspend fun loadProfile(userId: String) {
+        try {
+            val profile = databaseService.getProfile(userId)
+            _uiState.value = _uiState.value.copy(
+                fullName = profile?.fullName ?: "",
+                avatarUrl = profile?.avatarUrl,
+                isLoading = false,
+            )
+        } catch (_: Exception) {
+            _uiState.value = _uiState.value.copy(isLoading = false)
         }
     }
 
-    fun deleteAccount() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            val userId = supabase.auth.currentUserOrNull()?.id
-            if (userId == null) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = "Session expirée, reconnectez-vous")
-                return@launch
-            }
-            try {
-                databaseService.deleteProfile(userId)
-                supabase.auth.signOut()
-                _uiState.value = ProfileUiState(navigateToLogin = true)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = "Erreur lors de la suppression : ${e.message}")
-            }
-        }
+    private suspend fun loadEvents(userId: String) {
+        try {
+            val userEvents = databaseService.getAllEvents().filter { it.user_id == userId }
+            _uiState.value = _uiState.value.copy(events = userEvents)
+        } catch (_: Exception) { }
+    }
+
+    fun onTabSelected(tab: ProfileTab) {
+        _uiState.value = _uiState.value.copy(selectedTab = tab)
     }
 
     fun onNavigationHandled() {
