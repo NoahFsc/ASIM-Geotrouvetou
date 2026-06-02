@@ -8,8 +8,11 @@ import fr.miage.geotrouvetou.domain.models.User
 import io.github.jan.supabase.postgrest.query.Order
 import fr.miage.geotrouvetou.utils.ImageHelper
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
@@ -78,13 +81,39 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
     }
 
     override suspend fun getProfile(userId: String): User? {
-        return client.postgrest["profiles"].select {
+        val user = client.postgrest["profiles"].select {
             filter { eq("id", userId) }
-        }.decodeSingleOrNull<User>()
+        }.decodeSingleOrNull<User>() ?: return null
+
+        val resolvedAvatarUrl = user.avatarUrl?.let { path ->
+            if (path.startsWith("http")) path
+            else try { imageHelper.getAvatarSignedUrl(path) } catch (_: Exception) { null }
+        }
+        return user.copy(avatarUrl = resolvedAvatarUrl)
     }
 
     override suspend fun createProfile(user: User) {
         client.postgrest["profiles"].insert(user)
+    }
+
+    override suspend fun updateProfile(userId: String, fullName: String) {
+        client.postgrest["profiles"].update({
+            set("full_name", fullName)
+        }) {
+            filter { eq("id", userId) }
+        }
+        client.auth.updateUser {
+            data = buildJsonObject { put("full_name", fullName) }
+        }
+    }
+
+    override suspend fun updateAvatar(userId: String, bytes: ByteArray) {
+        val avatarUrl = imageHelper.uploadAvatarImage(userId, bytes)
+        client.postgrest["profiles"].update({
+            set("avatar_url", avatarUrl)
+        }) {
+            filter { eq("id", userId) }
+        }
     }
 
     override suspend fun deleteProfile(userId: String) {

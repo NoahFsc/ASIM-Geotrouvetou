@@ -2,19 +2,17 @@ package fr.miage.geotrouvetou.ui.params
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
 import fr.miage.geotrouvetou.App
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 data class ParamsUiState(
     val isLoading: Boolean = false,
     val isAdmin: Boolean = false,
+    val isSigningOut: Boolean = false,
     val error: String? = null,
-    val navigateToLogin: Boolean = false,
 )
 
 class ParamViewModel(application: Application) : AndroidViewModel(application) {
@@ -43,9 +41,5 @@ class ParamViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.value = _uiState.value.copy(isLoading = false, error = "Erreur lors de la déconnexion")
             }
         }
-    }
-
-    fun onNavigationHandled() {
-        _uiState.value = _uiState.value.copy(navigateToLogin = false)
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,15 +21,17 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.FilterHdr
 import androidx.compose.material.icons.outlined.Key
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,22 +44,23 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.ui.components.atoms.Button
 import fr.miage.geotrouvetou.ui.components.atoms.ButtonVariant
+import fr.miage.geotrouvetou.ui.components.organisms.Modal
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ParamsScreen(
     onBackClick: () -> Unit,
     onLogout: () -> Unit,
     onAdminClick: () -> Unit = {},
+    onEditProfileClick: () -> Unit = {},
+    onEditPasswordClick: () -> Unit = {},
     viewModel: ParamViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(uiState.navigateToLogin) {
-        if (uiState.navigateToLogin) {
-            onLogout()
-            viewModel.onNavigationHandled()
-        }
-    }
+    val scope = rememberCoroutineScope()
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    var isSigningOut by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -107,9 +111,8 @@ fun ParamsScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val items = buildList {
-                    add(Triple(Icons.Outlined.Edit, "Modifier mon profil", {}))
-                    add(Triple(Icons.Outlined.Key, "Modifier mon mot de passe", {}))
-                    add(Triple(Icons.Outlined.FilterHdr, "Modifier mes préférences", {}))
+                    add(Triple(Icons.Outlined.Edit, "Modifier mon profil", onEditProfileClick))
+                    add(Triple(Icons.Outlined.Key, "Modifier mon mot de passe", onEditPasswordClick))
                     if (uiState.isAdmin) {
                         add(Triple(Icons.Outlined.Build, "Administration", onAdminClick))
                     }
@@ -136,6 +139,15 @@ fun ParamsScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
+        if (uiState.error != null) {
+            Text(
+                text = uiState.error!!,
+                color = colorResource(R.color.danger_500),
+                fontSize = 14.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
+
         // Déconnexion
         Text(
             text = "Déconnexion",
@@ -147,7 +159,61 @@ fun ParamsScreen(
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                ) { viewModel.signOut() },
+                ) { showLogoutDialog = true },
         )
+    }
+
+    if (showLogoutDialog) {
+        Modal(onDismissRequest = { showLogoutDialog = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "Souhaitez-vous vraiment vous déconnecter ?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(R.color.text_darker),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    lineHeight = 26.sp,
+                )
+                Text(
+                    text = "Vous reviendrez à l'accueil et vous ne pourrez plus voir vos trajets.",
+                    fontSize = 14.sp,
+                    color = colorResource(R.color.text_lighter),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    lineHeight = 20.sp,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Button(
+                    text = "Se déconnecter",
+                    onClick = {
+                        showLogoutDialog = false
+                        isSigningOut = true
+                        scope.launch {
+                            val success = viewModel.signOut()
+                            isSigningOut = false
+                            if (success) onLogout()
+                        }
+                    },
+                    enabled = !isSigningOut,
+                    variant = ButtonVariant.Fill,
+                )
+                Text(
+                    text = "Retour",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorResource(R.color.text_darker),
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { showLogoutDialog = false },
+                )
+            }
+        }
     }
 }

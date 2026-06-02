@@ -6,9 +6,11 @@ import android.util.Log
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
 import java.io.ByteArrayOutputStream
+import kotlin.time.Duration.Companion.hours
 
 class ImageHelper(private val client: SupabaseClient) {
     private val bucketName = "EventImages"
+    private val bucketNameAvatar = "avatars"
 
     /**
      * Télécharge une image dans le bucket Supabase et retourne son URL publique.
@@ -17,6 +19,17 @@ class ImageHelper(private val client: SupabaseClient) {
      * @param bytes Contenu original de l'image (JPG/PNG)
      * @return L'URL publique de l'image stockée en .webp
      */
+    suspend fun uploadAvatarImage(userId: String, bytes: ByteArray): String {
+        val path = "avatar_$userId.webp"
+        val payload = try { convertToWebp(bytes) } catch (_: Exception) { bytes }
+        client.storage.from(bucketNameAvatar).upload(path, payload) { upsert = true }
+        return path
+    }
+
+    suspend fun getAvatarSignedUrl(path: String): String {
+        return client.storage.from(bucketNameAvatar).createSignedUrl(path, 1.hours)
+    }
+
     suspend fun uploadEventImage(fileName: String, bytes: ByteArray): String {
         val finalFileName = if (fileName.endsWith(".webp")) fileName else "$fileName.webp"
         val payload = try {

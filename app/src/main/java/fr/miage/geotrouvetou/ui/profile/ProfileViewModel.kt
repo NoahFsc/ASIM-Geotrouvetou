@@ -66,6 +66,15 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         } catch (_: Exception) { }
     }
 
+    fun refresh() {
+        viewModelScope.launch {
+            val session = supabase.auth.currentSessionOrNull() ?: return@launch
+            val userId = session.user?.id ?: return@launch
+            loadProfile(userId)
+            loadEvents(userId)
+        }
+    }
+
     fun onTabSelected(tab: ProfileTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
     }
