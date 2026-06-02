@@ -206,7 +206,7 @@ fun ProfileScreen(
         EventHistoryModal(onDismissRequest = { showHistory = false })
     }
     if (showEventList) {
-        EventListModal(onDismissRequest = { showEventList = false })
+        EventListModal(events = emptyList(), onDismissRequest = { showEventList = false })
     }
 }
 
