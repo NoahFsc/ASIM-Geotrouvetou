@@ -81,12 +81,8 @@ fun NavGraph(navController: NavHostController) {
             composable(Routes.LOGIN) {
                 LoginScreen(
                     onLoginSuccess = {
-                        val dest = when (selectedTab) {
-                            NavTab.Profil -> Routes.PROFILE
-                            NavTab.Ajouter -> Routes.CREATE_EVENT
-                            NavTab.Carte -> Routes.MAP
-                        }
-                        navController.navigate(dest) {
+                        selectedTab = NavTab.Carte
+                        navController.navigate(Routes.MAP) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
                         loginToastKey++
