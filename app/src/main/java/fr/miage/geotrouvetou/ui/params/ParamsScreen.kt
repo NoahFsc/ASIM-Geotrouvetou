@@ -52,6 +52,7 @@ import kotlinx.coroutines.launch
 fun ParamsScreen(
     onBackClick: () -> Unit,
     onLogout: () -> Unit,
+    onAdminClick: () -> Unit = {},
     onEditProfileClick: () -> Unit = {},
     onEditPasswordClick: () -> Unit = {},
     viewModel: ParamViewModel = viewModel(),
@@ -109,11 +110,13 @@ fun ParamsScreen(
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val items = listOf(
-                    Triple(Icons.Outlined.Edit, "Modifier mon profil", onEditProfileClick),
-                    Triple(Icons.Outlined.Key, "Modifier mon mot de passe", onEditPasswordClick),
-                    Triple(Icons.Outlined.Build, "Administration", {}),
-                )
+                val items = buildList {
+                    add(Triple(Icons.Outlined.Edit, "Modifier mon profil", onEditProfileClick))
+                    add(Triple(Icons.Outlined.Key, "Modifier mon mot de passe", onEditPasswordClick))
+                    if (uiState.isAdmin) {
+                        add(Triple(Icons.Outlined.Build, "Administration", onAdminClick))
+                    }
+                }
                 items.forEach { (icon, label, action) ->
                     Box(
                         modifier = Modifier

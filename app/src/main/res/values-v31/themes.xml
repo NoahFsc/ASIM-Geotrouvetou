@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.GeoTrouvetou" parent="Base.Theme.GeoTrouvetou">
+        <!-- Fond du splash screen : couleur de fond de l'app -->
+        <item name="android:windowSplashScreenBackground">@color/background</item>
+        <!-- Icône centrée sur le splash screen -->
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <!-- Fond derrière l'icône (transparent = pas de cercle coloré autour) -->
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/background</item>
+    </style>
+</resources>
