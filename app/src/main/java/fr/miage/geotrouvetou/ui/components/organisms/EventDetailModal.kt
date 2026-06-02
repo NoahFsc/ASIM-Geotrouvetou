@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import fr.miage.geotrouvetou.R
+import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.Button
 import fr.miage.geotrouvetou.ui.components.atoms.TagStatus
 import fr.miage.geotrouvetou.ui.components.molecules.EventDetailCard
@@ -62,6 +63,123 @@ fun EventDetailModal(
         modifier = modifier
     ) {
         EventDetailContent(onBackClick = onBackClick, event = event)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EventDetailModal(
+    onDismissRequest: () -> Unit,
+    onBackClick: () -> Unit,
+    event: Evenement,
+    modifier: Modifier = Modifier,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+) {
+    Modal(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+        modifier = modifier
+    ) {
+        EvenementDetailContent(onBackClick = onBackClick, event = event)
+    }
+}
+
+@Composable
+fun EvenementDetailContent(
+    onBackClick: () -> Unit,
+    event: Evenement,
+    modifier: Modifier = Modifier,
+) {
+    val date = event.event_date?.substringBefore('T') ?: "—"
+    val time = event.event_date?.let { if ('T' in it) it.substringAfter('T').take(5) else null } ?: "—"
+    val imageUrl = event.image_url
+        ?: "https://picsum.photos/seed/${event.title.hashCode()}/800/400"
+    val coordsLabel = "%.4f, %.4f".format(event.latitude, event.longitude)
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.9f)
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                modifier = Modifier.clickable(onClick = onBackClick),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = null,
+                    tint = colorResource(R.color.text_darker),
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    text = "Retour",
+                    fontSize = 16.sp,
+                    color = colorResource(R.color.text_darker)
+                )
+            }
+
+            Button(
+                text = "Rejoindre",
+                onClick = {},
+                leftIcon = Icons.Default.Add,
+                fullWidth = false,
+                modifier = Modifier.height(40.dp)
+            )
+        }
+
+        EventDetailCard(
+            date = date,
+            time = time,
+            locationName = event.title,
+            locationDetail = coordsLabel
+        )
+
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = "Image pour ${event.title}",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(colorResource(R.color.text_disabled)),
+            contentScale = ContentScale.Crop
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = "A propos de l'événement",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = colorResource(R.color.text_darker)
+            )
+            Text(
+                text = event.description,
+                fontSize = 16.sp,
+                color = colorResource(R.color.text_light),
+                lineHeight = 24.sp
+            )
+        }
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(bottom = 16.dp)
+        ) {
+            Text(
+                text = "Participants",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = colorResource(R.color.text_darker)
+            )
+            ParticipantStack()
+        }
     }
 }
 

@@ -17,6 +17,8 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import androidx.core.content.ContextCompat
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.util.TypedValue
 import android.os.Looper
@@ -29,6 +31,8 @@ import fr.miage.geotrouvetou.domain.interfaces.IMapService
 import fr.miage.geotrouvetou.domain.interfaces.MapBounds
 import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.MarkerIcon
+import org.osmdroid.bonuspack.clustering.RadiusMarkerClusterer
+import org.osmdroid.bonuspack.clustering.StaticCluster
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.max
@@ -38,7 +42,11 @@ class OSMMapService(private val context: Context) : IMapService {
     private lateinit var mapView: MapView
     private lateinit var controller: IMapController
     private var myLocationOverlay: MyLocationNewOverlay? = null
+    private var clusterOverlay: RadiusMarkerClusterer? = null
+    private var onEventClick: ((Evenement) -> Unit)? = null
+    private var onClusterClick: ((List<Evenement>) -> Unit)? = null
     private var cachedMarkerIcon: BitmapDrawable? = null
+    private var cachedClusterIcon: Bitmap? = null
     private var onViewBoundsChanged: ((MapBounds) -> Unit)? = null
     private var minimumWidthKm = 20.0
     private var minimumZoomNeedsInitialization = true
@@ -62,6 +70,9 @@ class OSMMapService(private val context: Context) : IMapService {
         mapView.setMultiTouchControls(true)
         controller.setZoom(3.0)
         controller.setCenter(GeoPoint(20.0, 0.0))
+
+        clusterOverlay = buildClusterOverlay()
+        mapView.overlays.add(clusterOverlay)
 
         myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), mapView).apply {
             isDrawAccuracyEnabled = true
@@ -158,6 +169,7 @@ class OSMMapService(private val context: Context) : IMapService {
         if (!this::mapView.isInitialized) return
         mapView.post {
             addMarkerInternal(event)
+            clusterOverlay?.invalidate()
             mapView.invalidate()
         }
     }
@@ -168,15 +180,23 @@ class OSMMapService(private val context: Context) : IMapService {
         val generation = ++displayGeneration
         mapView.post {
             if (generation != displayGeneration) return@post
-            mapView.overlays.removeAll { it is Marker }
-            snapshot.forEach { event ->
-                addMarkerInternal(event)
-            }
+
+            // Remplace le cluster overlay existant par un nouveau (osmbonuspack n'expose pas de clear())
+            mapView.overlays.removeAll { it is RadiusMarkerClusterer }
+            val newCluster = buildClusterOverlay()
+            clusterOverlay = newCluster
+
+            snapshot.forEach { event -> addMarkerInternal(event) }
+
+            // Insérer à l'index 0 pour que myLocationOverlay reste au-dessus
+            mapView.overlays.add(0, newCluster)
+            newCluster.invalidate()
             mapView.invalidate()
         }
     }
 
     private fun addMarkerInternal(event: Evenement) {
+        val cluster = clusterOverlay ?: return
         val marker = Marker(mapView).apply {
             position = GeoPoint(event.latitude, event.longitude)
             // L'icône est circulaire, donc on la centre pour éviter un décalage visuel sur les bords.
@@ -189,9 +209,63 @@ class OSMMapService(private val context: Context) : IMapService {
             }
             title = event.title
             snippet = event.description
+            relatedObject = event
+            infoWindow = null
+            setOnMarkerClickListener { _, _ ->
+                onEventClick?.invoke(event)
+                true
+            }
         }
         Log.d("OSMMapService", "Adding marker at ${event.latitude}, ${event.longitude} with title='${event.title}'")
-        mapView.overlays.add(marker)
+        cluster.add(marker)
+    }
+
+    private fun buildClusterOverlay(): RadiusMarkerClusterer = ClusterMarkerOverlay().apply {
+        setRadius(100)
+        setIcon(getClusterIcon())
+    }
+
+    private inner class ClusterMarkerOverlay : RadiusMarkerClusterer(context) {
+        override fun buildClusterMarker(cluster: StaticCluster, mapView: MapView): Marker {
+            val marker = super.buildClusterMarker(cluster, mapView)
+            marker.setOnMarkerClickListener { _, _ ->
+                val events = (0 until cluster.size)
+                    .mapNotNull { cluster.getItem(it).relatedObject as? Evenement }
+                if (events.isNotEmpty()) onClusterClick?.invoke(events)
+                true
+            }
+            return marker
+        }
+    }
+
+    override fun setOnEventClickListener(listener: ((Evenement) -> Unit)?) {
+        onEventClick = listener
+    }
+
+    override fun setOnClusterClickListener(listener: ((List<Evenement>) -> Unit)?) {
+        onClusterClick = listener
+    }
+
+    private fun getClusterIcon(): Bitmap {
+        cachedClusterIcon?.let { return it }
+        val sizePx = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 48f, context.resources.displayMetrics
+        ).toInt()
+        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val center = sizePx / 2f
+        val stroke = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3f, context.resources.displayMetrics)
+        val radius = center - stroke
+        canvas.drawCircle(center, center, radius, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = context.getColor(fr.miage.geotrouvetou.R.color.primary_400)
+        })
+        canvas.drawCircle(center, center, radius, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            color = Color.WHITE
+            strokeWidth = stroke
+        })
+        return bitmap.also { cachedClusterIcon = it }
     }
 
     private fun hasLocationPermission(): Boolean {
