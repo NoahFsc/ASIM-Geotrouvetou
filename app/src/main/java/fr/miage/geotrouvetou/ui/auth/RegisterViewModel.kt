@@ -1,11 +1,12 @@
 package fr.miage.geotrouvetou.ui.auth
 
 import android.app.Application
-import android.util.Patterns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.miage.geotrouvetou.App
 import fr.miage.geotrouvetou.domain.models.User
+import fr.miage.geotrouvetou.utils.PasswordValidation
+import fr.miage.geotrouvetou.utils.UserFieldValidator
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,23 +78,15 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
         _uiState.value = _uiState.value.copy(termsAccepted = value)
     }
 
-    fun validateEmail(email: String): String? = when {
-        email.isBlank() -> "L'adresse email est requise"
-        !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> "Format d'email invalide"
-        else -> null
-    }
+    fun validateEmail(email: String): String? = UserFieldValidator.validateEmail(email)
 
-    fun validatePassword(password: String): String? = when {
-        password.isBlank() -> "Le mot de passe est requis"
-        password.length < 8 -> "Le mot de passe doit contenir au moins 8 caractères"
-        !password.any { it.isDigit() } -> "Le mot de passe doit contenir au moins 1 chiffre"
-        !password.any { it.isUpperCase() } -> "Le mot de passe doit contenir au moins 1 majuscule"
-        !password.any { !it.isLetterOrDigit() } -> "Le mot de passe doit contenir au moins 1 caractère spécial"
-        else -> null
+    fun validatePassword(password: String): String? {
+        if (password.isBlank()) return "Le mot de passe est requis"
+        return PasswordValidation.of(password).firstError()
     }
 
     fun validateConfirmPassword(password: String, confirm: String): String? =
-        if (password.isNotBlank() && confirm != password) "Les mots de passe ne correspondent pas" else null
+        PasswordValidation.confirmError(password, confirm)
 
     private fun translateError(message: String?): String = when {
         message == null -> "Une erreur inattendue s'est produite"

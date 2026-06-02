@@ -11,6 +11,8 @@ interface IDatabaseService {
     suspend fun uploadImage(fileName: String, bytes: ByteArray): String
     suspend fun getProfile(userId: String): User?
     suspend fun createProfile(user: User)
+    suspend fun updateProfile(userId: String, fullName: String)
+    suspend fun updateAvatar(userId: String, bytes: ByteArray)
     suspend fun deleteProfile(userId: String)
     suspend fun getEventsByVisibleBounds(minLat: Double, maxLat: Double, minLon: Double, maxLon: Double): List<Evenement>
 }

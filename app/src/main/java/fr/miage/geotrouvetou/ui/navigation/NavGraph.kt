@@ -1,5 +1,7 @@
 package fr.miage.geotrouvetou.ui.navigation
 
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +26,8 @@ import fr.miage.geotrouvetou.ui.auth.LoginScreen
 import fr.miage.geotrouvetou.ui.auth.RegisterScreen
 import fr.miage.geotrouvetou.ui.components.molecules.NavBar
 import fr.miage.geotrouvetou.ui.components.molecules.NavTab
+import fr.miage.geotrouvetou.ui.profile.EditPasswordScreen
+import fr.miage.geotrouvetou.ui.profile.EditProfileScreen
 import fr.miage.geotrouvetou.ui.events.CreateEventScreen
 import fr.miage.geotrouvetou.ui.map.MapScreen
 import fr.miage.geotrouvetou.ui.params.ParamsScreen
@@ -36,6 +40,8 @@ object Routes {
     const val MAP = "map"
     const val PROFILE = "profile"
     const val PARAMS = "params"
+    const val EDIT_PROFILE = "editProfile"
+    const val EDIT_PASSWORD = "editPassword"
     const val CREATE_EVENT = "createEvent"
 }
 
@@ -46,6 +52,9 @@ fun NavGraph(navController: NavHostController) {
 
     var selectedTab by remember { mutableStateOf(NavTab.Carte) }
     var loginToastKey by remember { mutableIntStateOf(0) }
+    var registerToastKey by remember { mutableIntStateOf(0) }
+    var deleteAccountToastKey by remember { mutableIntStateOf(0) }
+    var logoutToastKey by remember { mutableIntStateOf(0) }
     var eventCreatedToastKey by remember { mutableIntStateOf(0) }
     val navBackStackEntryAsState by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntryAsState?.destination?.route
@@ -92,6 +101,7 @@ fun NavGraph(navController: NavHostController) {
                         navController.navigate(Routes.MAP) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
+                        registerToastKey++
                     },
                     onBackClick = { navController.popBackStack() },
                 )
@@ -121,6 +131,35 @@ fun NavGraph(navController: NavHostController) {
                         navController.navigate(Routes.MAP) {
                             popUpTo(0) { inclusive = true }
                         }
+                        logoutToastKey++
+                    },
+                    onEditProfileClick = { navController.navigate(Routes.EDIT_PROFILE) },
+                    onEditPasswordClick = { navController.navigate(Routes.EDIT_PASSWORD) },
+                )
+            }
+
+            composable(Routes.EDIT_PASSWORD,
+                enterTransition = { slideInHorizontally { it } },
+                exitTransition = { slideOutHorizontally { -it } },
+                popEnterTransition = { slideInHorizontally { -it } },
+                popExitTransition = { slideOutHorizontally { it } },) {
+                EditPasswordScreen(onBackClick = { navController.popBackStack() })
+            }
+
+            composable(Routes.EDIT_PROFILE,
+                enterTransition = { slideInHorizontally { it } },
+                exitTransition = { slideOutHorizontally { -it } },
+                popEnterTransition = { slideInHorizontally { -it } },
+                popExitTransition = { slideOutHorizontally { it } },
+                ) {
+                EditProfileScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onAccountDeleted = {
+                        selectedTab = NavTab.Carte
+                        navController.navigate(Routes.MAP) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                        deleteAccountToastKey++
                     },
                 )
             }
@@ -145,6 +184,27 @@ fun NavGraph(navController: NavHostController) {
                 key = loginToastKey,
             )
         }
+        if (registerToastKey > 0) {
+            Toast(
+                title = "Compte créé !",
+                description = "Bienvenue sur Geo Trouvetou",
+                key = registerToastKey,
+            )
+        }
+        if (deleteAccountToastKey > 0) {
+            Toast(
+                title = "Compte supprimé",
+                description = "Votre compte a bien été supprimé",
+                key = deleteAccountToastKey,
+            )
+        }
+        if (logoutToastKey > 0) {
+            Toast(
+                title = "Déconnexion réussie",
+                description = "À bientôt sur Geo Trouvetou",
+                key = logoutToastKey,
+            )
+        }
         if (eventCreatedToastKey > 0) {
             Toast(
                 title = "Succès !",
@@ -153,7 +213,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        val hideNavBar = currentRoute in setOf(Routes.PARAMS)
+        val hideNavBar = currentRoute in setOf(Routes.PARAMS, Routes.EDIT_PROFILE, Routes.EDIT_PASSWORD)
         if (!hideNavBar) NavBar(
                 selectedTab = selectedTab,
                 onTabSelected = { tab ->
