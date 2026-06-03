@@ -33,21 +33,14 @@ import coil.request.ImageRequest
 import fr.miage.geotrouvetou.BuildConfig
 import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.domain.models.Evenement
-import java.text.SimpleDateFormat
-import java.util.Locale
+import fr.miage.geotrouvetou.ui.utils.formattedDateShort
+import fr.miage.geotrouvetou.ui.utils.formattedTime
 
 @Composable
 fun ProfileEventItem(event: Evenement, onClick: () -> Unit) {
     val context = LocalContext.current
-    val (displayDate, displayTime) = try {
-        val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val date = isoFormat.parse(event.event_date?.take(19) ?: "")
-        val dateFormatter = SimpleDateFormat("dd/MM", Locale.FRANCE)
-        val timeFormatter = SimpleDateFormat("HH:mm", Locale.FRANCE)
-        Pair(dateFormatter.format(date!!), timeFormatter.format(date))
-    } catch (e: Exception) {
-        Pair("--/--", "--:--")
-    }
+    val displayDate = event.formattedDateShort()
+    val displayTime = event.formattedTime()
 
     Row(
         modifier = Modifier
@@ -132,7 +125,7 @@ fun ProfileEventItemPreview() {
             description = "Une petite marche",
             latitude = 0.0,
             longitude = 0.0,
-            event_date = "2024-04-28T09:00:00Z"
+            event_date = "2024-04-28T09:00:00"
         ),
         onClick = {}
     )

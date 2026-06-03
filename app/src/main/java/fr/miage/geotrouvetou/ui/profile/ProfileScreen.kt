@@ -53,7 +53,6 @@ import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.SegmentedControl
 import fr.miage.geotrouvetou.ui.components.atoms.StatCard
 import fr.miage.geotrouvetou.ui.components.molecules.ProfileEventItem
-import fr.miage.geotrouvetou.ui.map.modals.EventHistoryModal
 import fr.miage.geotrouvetou.ui.map.modals.EventListModal
 
 @Composable
@@ -64,7 +63,6 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showHistory by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -98,7 +96,6 @@ fun ProfileContent(
     onTabSelected: (ProfileTab) -> Unit,
     onEventClick: (String) -> Unit
 ) {
-    var showHistory by remember { mutableStateOf(false) }
     var showEventList by remember { mutableStateOf(false) }
 
     Column(
@@ -177,12 +174,12 @@ fun ProfileContent(
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 StatCard(
                     value = "${uiState.events.size}",
-                    label = "TRAJETS",
+                    label = "ÉVÉNEMENTS",
                     modifier = Modifier.weight(1f),
                 )
                 StatCard(
                     value = "—",
-                    label = "KILOMÈTRES",
+                    label = "PARTICIPATIONS",
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -239,9 +236,6 @@ fun ProfileContent(
         }
     }
 
-    if (showHistory) {
-        EventHistoryModal(onDismissRequest = { showHistory = false })
-    }
 }
 
 @Preview(showBackground = true)

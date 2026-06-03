@@ -1,53 +1,38 @@
 package fr.miage.geotrouvetou.ui.map.modals
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.miage.geotrouvetou.R
-import fr.miage.geotrouvetou.data.geocoding.NominatimPlace
-import fr.miage.geotrouvetou.data.geocoding.NominatimService
 import fr.miage.geotrouvetou.domain.models.Evenement
-import fr.miage.geotrouvetou.ui.components.atoms.TagStatus
 import fr.miage.geotrouvetou.ui.components.molecules.EventCard
+import fr.miage.geotrouvetou.ui.components.molecules.PlaceSearchBar
+import fr.miage.geotrouvetou.ui.components.organisms.Modal
+import fr.miage.geotrouvetou.ui.components.organisms.SearchBar
 import fr.miage.geotrouvetou.ui.utils.formattedDate
 import fr.miage.geotrouvetou.ui.utils.formattedTime
 import fr.miage.geotrouvetou.ui.utils.tagStatus
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +46,7 @@ fun EventListModal(
 ) {
     var selectedEvent by remember { mutableStateOf<Evenement?>(null) }
 
-    _root_ide_package_.fr.miage.geotrouvetou.ui.components.organisms.Modal(
+    Modal(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         modifier = modifier
@@ -74,7 +59,7 @@ fun EventListModal(
                 onPlaceSelected = onPlaceSelected
             )
         } else {
-            EvenementDetailContent(
+            EventDetailModalContent(
                 event = selectedEvent!!,
                 onBackClick = { selectedEvent = null }
             )
@@ -91,29 +76,6 @@ fun EventListContent(
     modifier: Modifier = Modifier,
 ) {
     var searchQuery by remember { mutableStateOf("") }
-    var placeResults by remember { mutableStateOf<List<NominatimPlace>>(emptyList()) }
-    var isSearching by remember { mutableStateOf(false) }
-
-    // Recherche de lieu via Nominatim avec debounce (seulement si onPlaceSelected est fourni)
-    if (onPlaceSelected != null) {
-        LaunchedEffect(searchQuery) {
-            if (searchQuery.isBlank()) {
-                placeResults = emptyList()
-                isSearching = false
-                return@LaunchedEffect
-            }
-            delay(500)
-            isSearching = true
-            try {
-                placeResults = NominatimService.search(searchQuery)
-            } catch (e: Exception) {
-                placeResults = emptyList()
-            } finally {
-                isSearching = false
-            }
-        }
-    }
-
     val isPlaceSearch = onPlaceSelected != null && searchQuery.isNotBlank()
 
     Column(
@@ -123,13 +85,18 @@ fun EventListContent(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        _root_ide_package_.fr.miage.geotrouvetou.ui.components.organisms.SearchBar(
+        SearchBar(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             placeholder = "Rechercher un lieu"
         )
 
-        if (!isPlaceSearch) {
+        if (isPlaceSearch) {
+            PlaceSearchBar(
+                query = searchQuery,
+                onPlaceSelected = onPlaceSelected!!
+            )
+        } else {
             Text(
                 text = title,
                 fontSize = 20.sp,
@@ -161,116 +128,9 @@ fun EventListContent(
                     )
                 }
             }
-        } else {
-            Text(
-                text = "Lieux",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(R.color.text_darker)
-            )
-
-            if (isSearching) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(32.dp),
-                        color = colorResource(R.color.primary_400)
-                    )
-                }
-            } else if (placeResults.isEmpty()) {
-                Text(
-                    text = "Aucun lieu trouvé",
-                    fontSize = 14.sp,
-                    color = colorResource(R.color.text_light)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(placeResults) { place ->
-                        PlaceResultCard(
-                            place = place,
-                            onClick = { onPlaceSelected(place.latitude, place.longitude) }
-                        )
-                    }
-                }
-            }
         }
     }
 }
-
-@Composable
-private fun PlaceResultCard(
-    place: NominatimPlace,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(colorResource(R.color.white))
-            .border(1.dp, colorResource(R.color.text_disabled), RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.LocationOn,
-                contentDescription = null,
-                tint = colorResource(R.color.primary_400),
-                modifier = Modifier.size(20.dp)
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = place.mainLine,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = colorResource(R.color.text_darker),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (place.countryLine.isNotBlank()) {
-                    Text(
-                        text = place.countryLine,
-                        fontSize = 12.sp,
-                        color = colorResource(R.color.text_light),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = colorResource(R.color.text_light),
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
-
-// ---- Kept for EventHistoryModal compatibility ----
-
-data class EventProposal(
-    val tag: TagStatus,
-    val title: String,
-    val duration: String,
-    val distance: String,
-    val isRecommended: Boolean,
-    val attendance: String,
-    val date: String,
-    val time: String,
-    val locationName: String,
-    val locationDetail: String,
-    val description: String
-)
 
 @Preview(showBackground = true)
 @Composable
