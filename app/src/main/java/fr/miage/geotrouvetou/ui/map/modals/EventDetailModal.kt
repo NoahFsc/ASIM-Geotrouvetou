@@ -49,6 +49,7 @@ import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.Button
 import fr.miage.geotrouvetou.ui.components.atoms.TagStatus
 import fr.miage.geotrouvetou.ui.components.molecules.EventDetailCard
+import fr.miage.geotrouvetou.ui.components.organisms.Modal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
