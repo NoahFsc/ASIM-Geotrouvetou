@@ -29,4 +29,9 @@ interface IDatabaseService {
     suspend fun updateUserRole(userId: String, role: String)
     suspend fun adminDeleteUser(userId: String)
     suspend fun deleteEvent(eventId: String)
+
+    // Events - Rejoindre
+    suspend fun joinEvent(eventId: String, userId: String)
+    suspend fun isUserParticipating(eventId: String, userId: String): Boolean
+    suspend fun getParticipantsCount(eventId: String): Int
 }

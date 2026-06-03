@@ -44,9 +44,9 @@ import fr.miage.geotrouvetou.data.maps.OSMMapService
 import fr.miage.geotrouvetou.domain.interfaces.MapBounds
 import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.RoundIconButton
-import fr.miage.geotrouvetou.ui.components.organisms.EventDetailModal
-import fr.miage.geotrouvetou.ui.components.organisms.EventListModal
 import fr.miage.geotrouvetou.ui.components.organisms.SearchBar
+import fr.miage.geotrouvetou.ui.map.modals.EventListModal
+import fr.miage.geotrouvetou.ui.map.modals.EventDetailModal
 import org.osmdroid.views.MapView
 
 @OptIn(ExperimentalMaterial3Api::class)

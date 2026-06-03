@@ -4,6 +4,7 @@ import fr.miage.geotrouvetou.domain.interfaces.IDatabaseService
 import fr.miage.geotrouvetou.domain.models.AdminStats
 import fr.miage.geotrouvetou.domain.models.AuditLogEntry
 import fr.miage.geotrouvetou.domain.models.Evenement
+import fr.miage.geotrouvetou.domain.models.EventParticipant
 import fr.miage.geotrouvetou.domain.models.User
 import io.github.jan.supabase.postgrest.query.Order
 import fr.miage.geotrouvetou.utils.ImageHelper
@@ -14,12 +15,13 @@ import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.realtime.RealtimeChannel
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
 import io.github.jan.supabase.realtime.realtime
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 
 /**
  * Implémentation du service de données via Supabase.
@@ -29,6 +31,7 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
 
     private val tableName = "events"
     private val imageHelper = ImageHelper(client)
+    private var eventsChannel: RealtimeChannel? = null
 
     override suspend fun addEvent(event: Evenement) {
         client.postgrest[tableName].insert(event)
@@ -72,15 +75,28 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
      * Émet Unit à chaque changement sur la table 'events'.
      * Le caller (MapViewModel) appelle scheduleRefresh() pour recharger
      * selon les bounds courantes — on n'appelle plus getAllEvents() ici.
+     *
+     * Le flow gère son propre cycle de vie : unsubscribe de l'ancien channel
+     * avant de créer le nouveau, et cleanup via finally à la cancellation.
      */
-    override fun listenToEventsRealtime(): Flow<Unit> {
-        val channel = client.realtime.channel("public-events")
+    override fun listenToEventsRealtime(): Flow<Unit> = flow {
+        eventsChannel?.unsubscribe()
 
-        return channel.postgresChangeFlow<PostgresAction>(schema = "public") {
-            table = tableName
-        }.map { Unit }.onStart {
+        val channel = client.realtime.channel("public-events")
+        eventsChannel = channel
+
+        try {
+            val changeFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+                table = tableName
+            }.map { Unit }
+
             channel.subscribe()
-            emit(Unit) // Déclenche un premier chargement dès l'abonnement
+            emit(Unit) // premier chargement dès l'abonnement
+
+            changeFlow.collect { emit(it) }
+        } finally {
+            channel.unsubscribe()
+            eventsChannel = null
         }
     }
 
@@ -128,6 +144,28 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
         }
         // Supprime le compte dans auth.users via une fonction SQL (security definer)
         client.postgrest.rpc("delete_own_account")
+    }
+
+    override suspend fun joinEvent(eventId: String, userId: String) {
+        client.postgrest["event_participants"].insert(EventParticipant(eventId, userId))
+    }
+
+    override suspend fun isUserParticipating(eventId: String, userId: String): Boolean {
+        return client.postgrest["event_participants"].select {
+            filter {
+                eq("event_id", eventId)
+                eq("profile_id", userId)
+            }
+        }.decodeList<EventParticipant>().isNotEmpty()
+    }
+
+    override suspend fun getParticipantsCount(eventId: String): Int {
+        val response = client.postgrest["event_participants"].select {
+            filter {
+                eq("event_id", eventId)
+            }
+        }.decodeList<EventParticipant>()
+        return response.size
     }
 
     // ── Admin ────────────────────────────────────────────────────────────────

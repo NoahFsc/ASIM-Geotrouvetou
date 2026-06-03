@@ -1,0 +1,136 @@
+package fr.miage.geotrouvetou.ui.map.modals
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import fr.miage.geotrouvetou.R
+import fr.miage.geotrouvetou.domain.models.Evenement
+import fr.miage.geotrouvetou.ui.components.atoms.Button
+import fr.miage.geotrouvetou.ui.components.organisms.EventDetailBody
+import fr.miage.geotrouvetou.ui.components.organisms.Modal
+import fr.miage.geotrouvetou.ui.utils.formattedDateLong
+import fr.miage.geotrouvetou.ui.utils.formattedTime
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EventDetailModal(
+    onDismissRequest: () -> Unit,
+    event: Evenement,
+    onBackClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+) {
+    Modal(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+        modifier = modifier
+    ) {
+        EventDetailModalContent(onBackClick = onBackClick, event = event)
+    }
+}
+
+@Composable
+fun EventDetailModalContent(
+    event: Evenement,
+    onBackClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
+    val date = event.formattedDateLong()
+    val time = event.formattedTime()
+    val imageUrl = event.image_url
+        ?: "https://picsum.photos/seed/${event.title.hashCode()}/800/400"
+    val coordsLabel = "%.4f, %.4f".format(event.latitude, event.longitude)
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.9f)
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (onBackClick != null) {
+                Row(
+                    modifier = Modifier.clickable(onClick = onBackClick),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = null,
+                        tint = colorResource(R.color.text_darker),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = "Retour",
+                        fontSize = 16.sp,
+                        color = colorResource(R.color.text_darker)
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier)
+            }
+
+            Button(
+                text = "Rejoindre",
+                onClick = {},
+                leftIcon = Icons.Default.Add,
+                fullWidth = false,
+                modifier = Modifier.height(40.dp)
+            )
+        }
+
+        EventDetailBody(
+            imageUrl = imageUrl,
+            date = date,
+            time = time,
+            locationName = event.title,
+            locationDetail = coordsLabel,
+            description = event.description,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EventDetailModalContentPreview() {
+    EventDetailModalContent(
+        event = Evenement(
+            title = "Grande Forêt de Chailluz",
+            description = "Ce parcours accessible aux chiens vous fait découvrir la grande forêt de Chailluz dans les environs de Besançon.",
+            latitude = 47.2734,
+            longitude = 6.0633,
+            event_date = "2024-04-28T10:00:00"
+        )
+    )
+}

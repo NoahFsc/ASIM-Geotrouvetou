@@ -1,6 +1,7 @@
 package fr.miage.geotrouvetou.ui.components.molecules
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ fun EventDetailCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .border(1.dp, colorResource(R.color.text_disabled), RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .background(colorResource(R.color.white))
             .padding(16.dp),

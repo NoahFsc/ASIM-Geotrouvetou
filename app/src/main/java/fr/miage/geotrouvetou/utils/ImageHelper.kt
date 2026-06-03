@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
+import io.ktor.http.ContentType
 import java.io.ByteArrayOutputStream
 import kotlin.time.Duration.Companion.hours
 
@@ -40,9 +41,14 @@ class ImageHelper(private val client: SupabaseClient) {
         }
 
         val bucket = client.storage.from(bucketName)
-        bucket.upload(finalFileName, payload)
+        bucket.upload(finalFileName, payload) {
+            contentType = ContentType.parse("image/webp")
+            upsert = true
+        }
 
-        return bucket.publicUrl(finalFileName)
+        val url = bucket.publicUrl(finalFileName)
+        Log.d("ImageHelper", "Image uploadée ! URL publique : $url")
+        return url
     }
 
     /**
