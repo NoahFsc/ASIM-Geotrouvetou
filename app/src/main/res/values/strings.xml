@@ -20,6 +20,16 @@
     <string name="btn_supprimer_compte">Supprimer le compte</string>
 
 
+    <!-- Réseau / Localisation -->
+    <string name="toast_connexion_perdue_titre">Connexion perdue</string>
+    <string name="toast_connexion_perdue_desc">Vérifiez votre connexion internet</string>
+    <string name="toast_connexion_retablie_titre">Connexion rétablie</string>
+    <string name="toast_connexion_retablie_desc">Vous êtes de nouveau en ligne</string>
+    <string name="toast_localisation_perdue_titre">Localisation désactivée</string>
+    <string name="toast_localisation_perdue_desc">Activez la localisation pour profiter de la carte</string>
+    <string name="toast_localisation_retablie_titre">Localisation activée</string>
+    <string name="toast_localisation_retablie_desc">Votre position est de nouveau disponible</string>
+
     <!-- Erreurs -->
     <string name="erreur_email_requis">L\'email est requis</string>
     <string name="erreur_email_format">Adresse email invalide (ex: nom@exemple.com)</string>
