@@ -16,11 +16,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,8 +41,10 @@ import fr.miage.geotrouvetou.App
 import fr.miage.geotrouvetou.R
 import fr.miage.geotrouvetou.data.backend.SupabaseDatabaseService
 import fr.miage.geotrouvetou.domain.models.Evenement
+import io.github.jan.supabase.auth.auth
 import fr.miage.geotrouvetou.ui.components.atoms.Button
 import fr.miage.geotrouvetou.ui.components.atoms.ButtonVariant
+import fr.miage.geotrouvetou.ui.components.atoms.Toast
 import fr.miage.geotrouvetou.ui.components.organisms.EventDetailBody
 import fr.miage.geotrouvetou.ui.utils.formattedDateLong
 import fr.miage.geotrouvetou.ui.utils.formattedTime
@@ -46,6 +53,7 @@ import fr.miage.geotrouvetou.ui.utils.formattedTime
 fun EventDetailScreen(
     eventId: String?,
     onBackClick: () -> Unit,
+    onLoginClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val viewModel: EventDetailViewModel = viewModel(
@@ -59,6 +67,9 @@ fun EventDetailScreen(
         }
     )
 
+    var isEditing by remember { mutableStateOf(false) }
+    var updateToastKey by remember { mutableStateOf(0) }
+
     LaunchedEffect(eventId) {
         eventId?.let { viewModel.loadEvent(it) }
     }
@@ -69,12 +80,49 @@ fun EventDetailScreen(
         }
     } else {
         viewModel.event?.let { event ->
-            EventDetailContent(
-                event = event,
-                onBackClick = onBackClick,
-                isJoined = viewModel.isJoined,
-                onJoinClick = { viewModel.joinEvent() }
-            )
+            if (isEditing) {
+                EventUpdateScreen(
+                    event = event,
+                    onBackClick = { isEditing = false },
+                    onEventUpdated = { 
+                        isEditing = false
+                        updateToastKey++
+                        eventId?.let { viewModel.loadEvent(it) }
+                    }
+                )
+            } else {
+                EventDetailContent(
+                    event = event,
+                    onBackClick = onBackClick,
+                    isJoined = viewModel.isJoined,
+                    isOwner = viewModel.isOwner,
+                    onJoinClick = { 
+                        val user = (context.applicationContext as App).supabase.auth.currentUserOrNull()
+                        if (user != null) {
+                            viewModel.joinEvent()
+                        } else {
+                            onLoginClick()
+                        }
+                    },
+                    onEditClick = { isEditing = true }
+                )
+
+                if (viewModel.joinToastKey > 0) {
+                    Toast(
+                        title = "Inscription réussie !",
+                        description = "Vous participez désormais à cet événement",
+                        key = viewModel.joinToastKey
+                    )
+                }
+
+                if (updateToastKey > 0) {
+                    Toast(
+                        title = "Modification réussie !",
+                        description = "L'événement a été mis à jour",
+                        key = updateToastKey
+                    )
+                }
+            }
         } ?: run {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(text = "Événement introuvable")
@@ -88,14 +136,17 @@ fun EventDetailContent(
     event: Evenement,
     onBackClick: () -> Unit,
     isJoined: Boolean,
+    isOwner: Boolean,
     onJoinClick: () -> Unit,
+    onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val imageUrl = event.image_url
         ?: "https://picsum.photos/seed/${event.title.hashCode()}/800/400"
     val date = event.formattedDateLong()
     val time = event.formattedTime()
-    val coordsLabel = "Lat: ${event.latitude}, Lon: ${event.longitude}"
+    val locationLabel = event.location ?: "Coordonnées"
+    val locationDetail = if (event.location != null) "" else "Lat: ${event.latitude}, Lon: ${event.longitude}"
 
     Column(
         modifier = modifier
@@ -138,11 +189,14 @@ fun EventDetailContent(
             )
 
             Button(
-                text = if (isJoined) "Déjà inscrit" else "Enregistrer",
-                onClick = { if (!isJoined) onJoinClick() },
-                enabled = !isJoined,
+                text = if (isOwner) "Modifier" else if (isJoined) "Déjà inscrit" else "Enregistrer",
+                onClick = {
+                    if (isOwner) onEditClick()
+                    else if (!isJoined) onJoinClick()
+                },
+                enabled = isOwner || !isJoined,
                 variant = ButtonVariant.Fill,
-                leftIcon = Icons.Default.Add,
+                leftIcon = if (isOwner) Icons.Default.Edit else Icons.Default.Add,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -150,8 +204,8 @@ fun EventDetailContent(
                 imageUrl = imageUrl,
                 date = date,
                 time = time,
-                locationName = "Coordonnées",
-                locationDetail = coordsLabel,
+                locationName = locationLabel,
+                locationDetail = locationDetail,
                 description = event.description,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -172,6 +226,8 @@ fun EventDetailScreenPreview() {
         ),
         onBackClick = {},
         isJoined = false,
-        onJoinClick = {}
+        isOwner = false,
+        onJoinClick = {},
+        onEditClick = {}
     )
 }

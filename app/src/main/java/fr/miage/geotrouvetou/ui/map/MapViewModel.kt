@@ -28,6 +28,8 @@ data class MapUiState(
     val hasLocationFix: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val joinToastKey: Int = 0,
+    val updateToastKey: Int = 0,
 )
 
 @OptIn(FlowPreview::class)
@@ -109,7 +111,15 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         scheduleRefresh()
     }
 
-    private fun scheduleRefresh() {
+    fun onEventJoined() {
+        _uiState.update { it.copy(joinToastKey = it.joinToastKey + 1) }
+    }
+
+    fun onEventUpdated() {
+        _uiState.update { it.copy(updateToastKey = it.updateToastKey + 1) }
+    }
+
+    fun scheduleRefresh() {
         refreshRequests.tryEmit(Unit)
     }
 

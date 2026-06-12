@@ -46,7 +46,7 @@ class OSMMapService(private val context: Context) : IMapService {
     private var clusterOverlay: RadiusMarkerClusterer? = null
     private var onEventClick: ((Evenement) -> Unit)? = null
     private var onClusterClick: ((List<Evenement>) -> Unit)? = null
-    private var displayedEventIds: Set<String?> = emptySet()
+    private var lastDisplayedEvents: List<Evenement> = emptyList()
     private var cachedMarkerIcon: BitmapDrawable? = null  // invalidé si la taille change
     private var cachedClusterIcon: Bitmap? = null         // invalidé si la taille change
     private var onViewBoundsChanged: ((MapBounds) -> Unit)? = null
@@ -178,10 +178,9 @@ class OSMMapService(private val context: Context) : IMapService {
         if (!this::mapView.isInitialized) return
         val snapshot = events.toList()
 
-        // Court-circuit : si la liste d'events n'a pas changé, pas besoin de reconstruire le cluster
-        val newIds = snapshot.map { it.id }.toSet()
-        if (newIds == displayedEventIds) return
-        displayedEventIds = newIds
+        // Court-circuit : si la liste d'events n'a pas changé (data class comparison), pas besoin de reconstruire le cluster
+        if (snapshot == lastDisplayedEvents) return
+        lastDisplayedEvents = snapshot
 
         val generation = ++displayGeneration
         mapView.post {

@@ -1,6 +1,5 @@
 package fr.miage.geotrouvetou.ui.map.modals
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,23 +15,34 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.miage.geotrouvetou.App
 import fr.miage.geotrouvetou.R
+import fr.miage.geotrouvetou.data.backend.SupabaseDatabaseService
 import fr.miage.geotrouvetou.domain.models.Evenement
+import io.github.jan.supabase.auth.auth
 import fr.miage.geotrouvetou.ui.components.atoms.Button
 import fr.miage.geotrouvetou.ui.components.organisms.EventDetailBody
 import fr.miage.geotrouvetou.ui.components.organisms.Modal
+import fr.miage.geotrouvetou.ui.events.EventDetailViewModel
 import fr.miage.geotrouvetou.ui.utils.formattedDateLong
 import fr.miage.geotrouvetou.ui.utils.formattedTime
 
@@ -42,6 +52,9 @@ fun EventDetailModal(
     onDismissRequest: () -> Unit,
     event: Evenement,
     onBackClick: (() -> Unit)? = null,
+    onEventJoined: (() -> Unit)? = null,
+    onEditClick: (() -> Unit)? = null,
+    onLoginClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
@@ -50,21 +63,83 @@ fun EventDetailModal(
         sheetState = sheetState,
         modifier = modifier
     ) {
-        EventDetailModalContent(onBackClick = onBackClick, event = event)
+        EventDetailModalContentWithViewModel(
+            event = event,
+            onBackClick = onBackClick,
+            onEventJoined = onEventJoined,
+            onEditClick = onEditClick,
+            onLoginClick = onLoginClick
+        )
     }
+}
+
+@Composable
+fun EventDetailModalContentWithViewModel(
+    event: Evenement,
+    onBackClick: (() -> Unit)? = null,
+    onEventJoined: (() -> Unit)? = null,
+    onEditClick: (() -> Unit)? = null,
+    onLoginClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val viewModel: EventDetailViewModel = viewModel(
+        key = event.id,
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val app = context.applicationContext as App
+                val databaseService = SupabaseDatabaseService(app.supabase)
+                @Suppress("UNCHECKED_CAST")
+                return EventDetailViewModel(databaseService, app.supabase) as T
+            }
+        }
+    )
+
+    LaunchedEffect(event) {
+        viewModel.event = event
+        event.id?.let { viewModel.loadEvent(it) }
+    }
+
+    LaunchedEffect(viewModel.joinToastKey) {
+        if (viewModel.joinToastKey > 0) {
+            onEventJoined?.invoke()
+        }
+    }
+
+    EventDetailModalContent(
+        event = event,
+        onBackClick = onBackClick,
+        isJoined = viewModel.isJoined,
+        isOwner = viewModel.isOwner,
+        onJoinClick = { 
+            val user = (context.applicationContext as App).supabase.auth.currentUserOrNull()
+            if (user != null) {
+                viewModel.joinEvent()
+            } else {
+                onLoginClick?.invoke()
+            }
+        },
+        onEditClick = onEditClick,
+        modifier = modifier
+    )
 }
 
 @Composable
 fun EventDetailModalContent(
     event: Evenement,
     onBackClick: (() -> Unit)? = null,
+    isJoined: Boolean = false,
+    isOwner: Boolean = false,
+    onJoinClick: () -> Unit = {},
+    onEditClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val date = event.formattedDateLong()
     val time = event.formattedTime()
     val imageUrl = event.image_url
         ?: "https://picsum.photos/seed/${event.title.hashCode()}/800/400"
-    val coordsLabel = "%.4f, %.4f".format(event.latitude, event.longitude)
+    val locationLabel = event.location ?: "Coordonnées"
+    val locationDetail = if (event.location != null) "" else "Lat: %.4f, Lon: %.4f".format(event.latitude, event.longitude)
 
     Column(
         modifier = modifier
@@ -101,20 +176,32 @@ fun EventDetailModalContent(
             }
 
             Button(
-                text = "Rejoindre",
-                onClick = {},
-                leftIcon = Icons.Default.Add,
+                text = if (isOwner) "Modifier" else if (isJoined) "Déjà inscrit" else "Enregistrer",
+                onClick = {
+                    if (isOwner) onEditClick?.invoke()
+                    else if (!isJoined) onJoinClick()
+                },
+                enabled = isOwner || !isJoined,
+                leftIcon = if (isOwner) Icons.Default.Edit else Icons.Default.Add,
                 fullWidth = false,
                 modifier = Modifier.height(40.dp)
             )
         }
 
+        Text(
+            text = event.title,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = colorResource(R.color.primary_600),
+            lineHeight = 34.sp
+        )
+
         EventDetailBody(
             imageUrl = imageUrl,
             date = date,
             time = time,
-            locationName = event.title,
-            locationDetail = coordsLabel,
+            locationName = locationLabel,
+            locationDetail = locationDetail,
             description = event.description,
             modifier = Modifier.padding(bottom = 16.dp)
         )

@@ -44,15 +44,18 @@ import fr.miage.geotrouvetou.data.maps.OSMMapService
 import fr.miage.geotrouvetou.domain.interfaces.MapBounds
 import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.RoundIconButton
+import fr.miage.geotrouvetou.ui.components.atoms.Toast
 import fr.miage.geotrouvetou.ui.components.organisms.SearchBar
 import fr.miage.geotrouvetou.ui.map.modals.EventListModal
 import fr.miage.geotrouvetou.ui.map.modals.EventDetailModal
+import fr.miage.geotrouvetou.ui.events.EventUpdateScreen
 import org.osmdroid.views.MapView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Suppress("DEPRECATION")
 @Composable
 fun MapScreen(
+    onLoginClick: () -> Unit = {},
     viewModel: MapViewModel = viewModel(),
 ) {
     @Suppress("DEPRECATION")
@@ -69,6 +72,7 @@ fun MapScreen(
     var showEventList by remember { mutableStateOf(false) }
     var clusterEvents by remember { mutableStateOf<List<Evenement>?>(null) }
     var selectedEvent by remember { mutableStateOf<Evenement?>(null) }
+    var editingEvent by remember { mutableStateOf<Evenement?>(null) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions(),
@@ -229,27 +233,65 @@ fun MapScreen(
                 onClick = { showEventList = true },
             )
         }
+
+        if (uiState.joinToastKey > 0) {
+            Toast(
+                title = "Inscription réussie !",
+                description = "Vous participez désormais à cet événement",
+                key = uiState.joinToastKey
+            )
+        }
+
+        if (uiState.updateToastKey > 0) {
+            Toast(
+                title = "Modification réussie !",
+                description = "L'événement a été mis à jour",
+                key = uiState.updateToastKey
+            )
+        }
     }
 
     when {
+        editingEvent != null -> EventUpdateScreen(
+            event = editingEvent!!,
+            onBackClick = { editingEvent = null },
+            onEventUpdated = { 
+                viewModel.onEventUpdated()
+                viewModel.scheduleRefresh()
+                editingEvent = null
+            }
+        )
         selectedEvent != null -> EventDetailModal(
             event = selectedEvent!!,
-            onDismissRequest = { selectedEvent = null }
-            // onBackClick omis → bouton retour masqué (ouverture depuis la map)
+            onDismissRequest = { selectedEvent = null },
+            onEventJoined = { viewModel.onEventJoined() },
+            onEditClick = {
+                editingEvent = selectedEvent
+                selectedEvent = null
+            },
+            onLoginClick = onLoginClick
         )
         clusterEvents != null -> EventListModal(
             events = clusterEvents!!,
             title = "Groupement (${clusterEvents!!.size})",
-            onDismissRequest = { clusterEvents = null }
+            onDismissRequest = { clusterEvents = null },
+            onEditClick = { event ->
+                editingEvent = event
+                clusterEvents = null
+            }
         )
         showEventList -> EventListModal(
             events = uiState.events,
             title = "Propositions (${uiState.events.size})",
             onDismissRequest = { showEventList = false },
-            onPlaceSelected = { lat, lon ->
+            onPlaceSelected = { place ->
                 showEventList = false
-                val zoom = mapService.getZoomForWidth(20.0, lat)
-                mapService.centerOn(lat, lon, zoom)
+                val zoom = mapService.getZoomForWidth(20.0, place.latitude)
+                mapService.centerOn(place.latitude, place.longitude, zoom)
+            },
+            onEditClick = { event ->
+                editingEvent = event
+                showEventList = false
             }
         )
     }

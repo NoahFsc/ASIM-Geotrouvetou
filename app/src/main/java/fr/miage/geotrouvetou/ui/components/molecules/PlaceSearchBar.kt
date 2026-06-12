@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -41,7 +39,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun PlaceSearchBar(
     query: String,
-    onPlaceSelected: (Double, Double) -> Unit,
+    onPlaceSelected: (NominatimPlace) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var placeResults by remember { mutableStateOf<List<NominatimPlace>>(emptyList()) }
@@ -63,6 +61,8 @@ fun PlaceSearchBar(
             isSearching = false
         }
     }
+
+    if (query.isBlank()) return
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
@@ -86,14 +86,14 @@ fun PlaceSearchBar(
                 color = colorResource(R.color.text_light)
             )
         } else {
-            LazyColumn(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(placeResults) { place ->
+                placeResults.forEach { place ->
                     PlaceResultCard(
                         place = place,
-                        onClick = { onPlaceSelected(place.latitude, place.longitude) }
+                        onClick = { onPlaceSelected(place) }
                     )
                 }
             }

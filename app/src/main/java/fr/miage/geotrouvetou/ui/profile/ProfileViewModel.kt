@@ -19,6 +19,7 @@ data class ProfileUiState(
     val fullName: String = "",
     val avatarUrl: String? = null,
     val events: List<Evenement> = emptyList(),
+    val joinedEvents: List<Evenement> = emptyList(),
     val selectedTab: ProfileTab = ProfileTab.MesEvenements,
     val isLoading: Boolean = true,
     val error: String? = null,
@@ -41,6 +42,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     _uiState.value = _uiState.value.copy(email = status.session.user?.email ?: "")
                     loadProfile(userId)
                     loadEvents(userId)
+                    loadParticipations(userId)
                 }
             }
         }
@@ -66,12 +68,23 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         } catch (_: Exception) { }
     }
 
+    private suspend fun loadParticipations(userId: String) {
+        try {
+            val allEvents = databaseService.getAllEvents()
+            val joinedEvents = allEvents.filter { event ->
+                event.id?.let { databaseService.isUserParticipating(it, userId) } == true
+            }
+            _uiState.value = _uiState.value.copy(joinedEvents = joinedEvents)
+        } catch (_: Exception) { }
+    }
+
     fun refresh() {
         viewModelScope.launch {
             val session = supabase.auth.currentSessionOrNull() ?: return@launch
             val userId = session.user?.id ?: return@launch
             loadProfile(userId)
             loadEvents(userId)
+            loadParticipations(userId)
         }
     }
 

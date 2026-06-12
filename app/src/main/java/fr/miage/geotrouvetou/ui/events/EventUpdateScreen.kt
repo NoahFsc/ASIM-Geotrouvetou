@@ -1,22 +1,26 @@
 package fr.miage.geotrouvetou.ui.events
 
-import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -43,8 +46,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.miage.geotrouvetou.App
 import fr.miage.geotrouvetou.R
-import fr.miage.geotrouvetou.data.geocoding.NominatimPlace
 import fr.miage.geotrouvetou.data.backend.SupabaseDatabaseService
+import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.atoms.Button
 import fr.miage.geotrouvetou.ui.components.atoms.ImageUploader
 import fr.miage.geotrouvetou.ui.components.atoms.Input
@@ -52,7 +55,6 @@ import fr.miage.geotrouvetou.ui.components.atoms.Switch
 import fr.miage.geotrouvetou.ui.components.atoms.TextArea
 import fr.miage.geotrouvetou.ui.components.atoms.Toast
 import fr.miage.geotrouvetou.ui.components.molecules.PlaceSearchBar
-import fr.miage.geotrouvetou.ui.components.organisms.SearchBar
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -60,20 +62,27 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateEventScreen(
-    onEventCreated: () -> Unit,
+fun EventUpdateScreen(
+    event: Evenement,
+    onBackClick: () -> Unit,
+    onEventUpdated: () -> Unit
 ) {
     val context = LocalContext.current
-    val viewModel: CreateEventViewModel = viewModel(
+    val viewModel: EventUpdateViewModel = viewModel(
+        key = event.id,
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 val app = context.applicationContext as App
                 val databaseService = SupabaseDatabaseService(app.supabase)
                 @Suppress("UNCHECKED_CAST")
-                return CreateEventViewModel(databaseService, app.supabase) as T
+                return EventUpdateViewModel(databaseService, app.supabase) as T
             }
         }
     )
+
+    LaunchedEffect(event) {
+        viewModel.setEvent(event)
+    }
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -155,8 +164,9 @@ fun CreateEventScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.eventCreated.collect {
-            onEventCreated()
+        viewModel.eventUpdated.collect {
+            onEventUpdated()
+            onBackClick()
         }
     }
 
@@ -166,181 +176,142 @@ fun CreateEventScreen(
         }
     }
 
-    CreateEventContent(
-        title = viewModel.title,
-        onTitleChange = { viewModel.title = it },
-        description = viewModel.description,
-        onDescriptionChange = { viewModel.description = it },
-        date = viewModel.date,
-        onDateClick = { showDatePicker = true },
-        time = viewModel.time,
-        onTimeClick = { showTimePicker = true },
-        location = viewModel.location,
-        onLocationChange = { viewModel.location = it },
-        onPlaceSelected = { place ->
-            viewModel.latitude = place.latitude
-            viewModel.longitude = place.longitude
-            viewModel.location = place.displayName
-        },
-        isPrivate = viewModel.isPrivate,
-        onPrivateChange = { viewModel.isPrivate = it },
-        imageUri = viewModel.imageUri,
-        onImageSelected = { viewModel.imageUri = it },
-        isLoading = viewModel.isLoading,
-        isFormValid = viewModel.isFormValid,
-        onCreateEvent = {
-            val bytes = viewModel.imageUri?.let { uri ->
-                context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-            }
-            viewModel.createEvent(bytes)
-        }
-    )
-}
-
-@Composable
-fun CreateEventContent(
-    title: String,
-    onTitleChange: (String) -> Unit,
-    description: String,
-    onDescriptionChange: (String) -> Unit,
-    date: String,
-    onDateClick: () -> Unit,
-    time: String,
-    onTimeClick: () -> Unit,
-    location: String,
-    onLocationChange: (String) -> Unit,
-    onPlaceSelected: (NominatimPlace) -> Unit,
-    isPrivate: Boolean,
-    onPrivateChange: (Boolean) -> Unit,
-    imageUri: Uri?,
-    onImageSelected: (Uri?) -> Unit,
-    isLoading: Boolean,
-    isFormValid: Boolean,
-    onCreateEvent: () -> Unit,
-) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colorResource(R.color.background))
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+            .padding(bottom = 32.dp)
     ) {
-        Text(
-            text = "Nouvel événement",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = colorResource(R.color.text_darker),
-        )
-
-        ImageUploader(
-            imageUri = imageUri,
-            onImageSelected = onImageSelected,
-            label = "Image de couverture",
-            required = true,
-        )
-
-        Input(
-            value = title,
-            onValueChange = onTitleChange,
-            placeholder = "Randonnée pour amateurs",
-            label = "Titre",
-            required = true,
-        )
-
-        TextArea(
-            value = description,
-            onValueChange = onDescriptionChange,
-            placeholder = "Randonnée pour amateurs",
-            label = "Description",
-            maxLength = 500,
-            required = true,
-        )
-
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .clickable { onBackClick() },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Input(
-                value = date,
-                onValueChange = {},
-                placeholder = "dd/mm/yyyy",
-                label = "Date",
-                required = true,
-                modifier = Modifier.weight(1f),
-                onClick = onDateClick,
-                readOnly = true
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = null,
+                tint = colorResource(R.color.text_light),
+                modifier = Modifier.size(24.dp)
             )
-            Input(
-                value = time,
-                onValueChange = {},
-                placeholder = "HH:mm",
-                label = "Heure",
-                required = true,
-                modifier = Modifier.weight(1f),
-                onClick = onTimeClick,
-                readOnly = true
-            )
-        }
-
-        SearchBar(
-            value = location,
-            onValueChange = onLocationChange,
-            placeholder = "Rechercher un lieu",
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        PlaceSearchBar(
-            query = location,
-            onPlaceSelected = onPlaceSelected,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = "Type d'événement",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorResource(R.color.text_darker),
-            )
-            Switch(
-                checked = isPrivate,
-                onCheckedChange = onPrivateChange,
-                label = "Rendre l'événement privé"
+                text = "Retour",
+                fontSize = 18.sp,
+                color = colorResource(R.color.text_light)
             )
         }
 
-        Button(
-            text = if (isLoading) "Création..." else "Créer l'événement",
-            onClick = onCreateEvent,
-            enabled = isFormValid,
-            leftIcon = if (isLoading) null else Icons.Default.Add
-        )
-    }
-}
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            Text(
+                text = "Modifier l'événement",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = colorResource(R.color.primary_600),
+                lineHeight = 34.sp
+            )
 
-@Preview(showBackground = true)
-@Composable
-fun CreateEventScreenPreview() {
-    CreateEventContent(
-        title = "Randonnée amateure",
-        onTitleChange = {},
-        description = "Une superbe randonnée !",
-        onDescriptionChange = {},
-        date = "12/12/2024",
-        onDateClick = {},
-        time = "14:00",
-        onTimeClick = {},
-        location = "Amiens",
-        onLocationChange = {},
-        onPlaceSelected = { _ -> },
-        isPrivate = false,
-        onPrivateChange = {},
-        imageUri = null,
-        onImageSelected = {},
-        isLoading = false,
-        isFormValid = true,
-        onCreateEvent = {}
-    )
+            ImageUploader(
+                imageUri = viewModel.imageUri,
+                onImageSelected = { viewModel.imageUri = it },
+                label = "Image de couverture",
+                required = true,
+                imageUrl = viewModel.currentImageUrl
+            )
+
+            Input(
+                value = viewModel.title,
+                onValueChange = { viewModel.title = it },
+                placeholder = "Titre",
+                label = "Titre",
+                required = true,
+            )
+
+            TextArea(
+                value = viewModel.description,
+                onValueChange = { viewModel.description = it },
+                placeholder = "Description",
+                label = "Description",
+                maxLength = 500,
+                required = true,
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Input(
+                    value = viewModel.date,
+                    onValueChange = {},
+                    placeholder = "dd/mm/yyyy",
+                    label = "Date",
+                    required = true,
+                    modifier = Modifier.weight(1f),
+                    onClick = { showDatePicker = true },
+                    readOnly = true
+                )
+                Input(
+                    value = viewModel.time,
+                    onValueChange = {},
+                    placeholder = "HH:mm",
+                    label = "Heure",
+                    required = true,
+                    modifier = Modifier.weight(1f),
+                    onClick = { showTimePicker = true },
+                    readOnly = true
+                )
+            }
+
+            Input(
+                value = viewModel.location,
+                onValueChange = { viewModel.location = it },
+                placeholder = "Localisation",
+                label = "Localisation",
+                required = true,
+                leadingIcon = Icons.Default.Search
+            )
+
+            PlaceSearchBar(
+                query = viewModel.location,
+                onPlaceSelected = { place ->
+                    viewModel.latitude = place.latitude
+                    viewModel.longitude = place.longitude
+                    viewModel.location = place.displayName
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Type d'événement",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(R.color.text_darker),
+                )
+                Switch(
+                    checked = viewModel.isPrivate,
+                    onCheckedChange = { viewModel.isPrivate = it },
+                    label = "Rendre l'événement privé"
+                )
+            }
+
+            Button(
+                text = if (viewModel.isLoading) "Modification..." else "Enregistrer les modifications",
+                onClick = {
+                    val bytes = viewModel.imageUri?.let { uri ->
+                        context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    }
+                    viewModel.updateEvent(bytes)
+                },
+                enabled = viewModel.isFormValid,
+                leftIcon = if (viewModel.isLoading) null else Icons.Default.Check,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
 }

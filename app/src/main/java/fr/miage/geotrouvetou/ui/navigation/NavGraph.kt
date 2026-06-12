@@ -108,7 +108,7 @@ fun NavGraph(navController: NavHostController) {
             }
 
             composable(Routes.MAP) {
-                MapScreen()
+                MapScreen(onLoginClick = { navController.navigate(Routes.LOGIN) })
             }
 
             composable(Routes.PROFILE) {
@@ -130,7 +130,8 @@ fun NavGraph(navController: NavHostController) {
                 val eventId = backStackEntry.arguments?.getString("eventId")
                 EventDetailScreen(
                     eventId = eventId,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onLoginClick = { navController.navigate(Routes.LOGIN) }
                 )
             }
 
