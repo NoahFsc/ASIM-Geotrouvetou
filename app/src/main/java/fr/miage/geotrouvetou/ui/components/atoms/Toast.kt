@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.annotation.ColorRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,11 +43,22 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import fr.miage.geotrouvetou.R
 
+enum class ToastType(
+    val icon: ImageVector,
+    val iconDescription: String,
+    @param:ColorRes val color: Int,
+    @param:ColorRes val backgroundColor: Int,
+) {
+    Success(Icons.Rounded.Check, "Succès", R.color.success_500, R.color.success_transparent),
+    Warning(Icons.Rounded.Warning, "Avertissement", R.color.warning_500, R.color.warning_transparent),
+}
+
 @Composable
 fun Toast(
     title: String = "Succès !",
     description: String = "Description du toast",
     modifier: Modifier = Modifier.zIndex(99999f),
+    type: ToastType = ToastType.Success,
     duration: Int = 3000,
     initialProgress: Float = 0f,
     key: Any = Unit
@@ -101,15 +115,15 @@ fun Toast(
                             modifier = Modifier
                                 .size(48.dp)
                                 .background(
-                                    color = colorResource(id = R.color.success_transparent),
+                                    color = colorResource(id = type.backgroundColor),
                                     shape = RoundedCornerShape(8.dp)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Rounded.Check,
-                                contentDescription = "Succès",
-                                tint = colorResource(id = R.color.success_500),
+                                imageVector = type.icon,
+                                contentDescription = type.iconDescription,
+                                tint = colorResource(id = type.color),
                                 modifier = Modifier.size(34.dp)
                             )
                         }
@@ -136,13 +150,13 @@ fun Toast(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(5.dp)
-                            .background(colorResource(id = R.color.success_transparent))
+                            .background(colorResource(id = type.backgroundColor))
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(progress.value)
                                 .fillMaxHeight()
-                                .background(colorResource(id = R.color.success_500))
+                                .background(colorResource(id = type.color))
                         )
                     }
                 }
@@ -161,4 +175,10 @@ fun ToastPreview0() {
 @Composable
 fun ToastPreviewAnimated() {
     Toast(title = "Succès !", description = "Voici la notif toast", duration = 3000, modifier = Modifier.padding(16.dp))
+}
+
+@Preview(name = "Toast Warning", showBackground = true)
+@Composable
+fun ToastPreviewWarning() {
+    Toast(title = "Connexion perdue", description = "Vérifiez votre connexion internet", type = ToastType.Warning, duration = 0, modifier = Modifier.padding(16.dp))
 }
