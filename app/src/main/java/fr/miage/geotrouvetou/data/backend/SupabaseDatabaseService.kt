@@ -7,6 +7,7 @@ import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.domain.models.EventParticipant
 import fr.miage.geotrouvetou.domain.models.User
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
 import fr.miage.geotrouvetou.utils.ImageHelper
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
@@ -44,8 +45,28 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
         return imageHelper.uploadEventImage(fileName, bytes)
     }
 
+    /**
+     * Restreint une requête aux events visibles par l'utilisateur courant :
+     * les events publics, plus ses propres events privés.
+     */
+    private fun PostgrestFilterBuilder.visibleToCurrentUser() {
+        val userId = client.auth.currentUserOrNull()?.id
+        if (userId != null) {
+            or {
+                eq("visibility", true)
+                eq("user_id", userId)
+            }
+        } else {
+            eq("visibility", true)
+        }
+    }
+
     override suspend fun getAllEvents(): List<Evenement> {
-        return client.postgrest[tableName].select().decodeList<Evenement>()
+        return client.postgrest[tableName]
+            .select {
+                filter { visibleToCurrentUser() }
+            }
+            .decodeList<Evenement>()
     }
 
     override suspend fun getEventsByVisibleBounds(
@@ -66,6 +87,7 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
                         gte("longitude", minLon)
                         lte("longitude", maxLon)
                     }
+                    visibleToCurrentUser()
                 }
             }
             .decodeList<Evenement>()
