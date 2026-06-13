@@ -43,6 +43,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import fr.miage.geotrouvetou.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -56,6 +57,7 @@ fun ImageUploader(
     modifier: Modifier = Modifier,
     label: String? = null,
     required: Boolean = false,
+    imageUrl: String? = null,
 ) {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(
@@ -121,6 +123,13 @@ fun ImageUploader(
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap!!,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
+            } else if (imageUrl != null) {
+                AsyncImage(
+                    model = imageUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.matchParentSize()

@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.miage.geotrouvetou.R
+import fr.miage.geotrouvetou.data.geocoding.NominatimPlace
 import fr.miage.geotrouvetou.domain.models.Evenement
 import fr.miage.geotrouvetou.ui.components.molecules.EventCard
 import fr.miage.geotrouvetou.ui.components.molecules.PlaceSearchBar
@@ -40,7 +41,8 @@ fun EventListModal(
     events: List<Evenement>,
     onDismissRequest: () -> Unit,
     title: String = "Propositions",
-    onPlaceSelected: ((Double, Double) -> Unit)? = null,
+    onPlaceSelected: ((NominatimPlace) -> Unit)? = null,
+    onEditClick: ((Evenement) -> Unit)? = null,
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
@@ -59,9 +61,13 @@ fun EventListModal(
                 onPlaceSelected = onPlaceSelected
             )
         } else {
-            EventDetailModalContent(
+            EventDetailModalContentWithViewModel(
                 event = selectedEvent!!,
-                onBackClick = { selectedEvent = null }
+                onBackClick = { selectedEvent = null },
+                onEditClick = {
+                    onEditClick?.invoke(selectedEvent!!)
+                    onDismissRequest()
+                }
             )
         }
     }
@@ -72,7 +78,7 @@ fun EventListContent(
     events: List<Evenement>,
     onEventClick: (Evenement) -> Unit,
     title: String = "Propositions",
-    onPlaceSelected: ((Double, Double) -> Unit)? = null,
+    onPlaceSelected: ((NominatimPlace) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -94,7 +100,7 @@ fun EventListContent(
         if (isPlaceSearch) {
             PlaceSearchBar(
                 query = searchQuery,
-                onPlaceSelected = onPlaceSelected!!
+                onPlaceSelected = onPlaceSelected
             )
         } else {
             Text(

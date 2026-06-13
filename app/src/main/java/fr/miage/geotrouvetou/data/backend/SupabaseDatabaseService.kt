@@ -38,6 +38,28 @@ class SupabaseDatabaseService(private val client: SupabaseClient) : IDatabaseSer
         client.postgrest[tableName].insert(event)
     }
 
+    override suspend fun updateEvent(event: Evenement) {
+        val eventId = event.id ?: return
+        client.postgrest[tableName].update(buildJsonObject {
+            put("title", event.title)
+            put("description", event.description)
+            put("image_url", event.image_url)
+            put("visibility", event.visibility)
+            put("event_date", event.event_date)
+            put("latitude", event.latitude)
+            put("longitude", event.longitude)
+            put("location", event.location)
+        }) {
+            filter { eq("id", eventId) }
+        }
+    }
+
+    override suspend fun getEvent(eventId: String): Evenement? {
+        return client.postgrest[tableName].select {
+            filter { eq("id", eventId) }
+        }.decodeSingleOrNull<Evenement>()
+    }
+
     /**
      * Utilise le helper dédié pour uploader une image et récupérer son lien public.
      */

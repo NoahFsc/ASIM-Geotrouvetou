@@ -9,6 +9,7 @@ data class Evenement(
     val description: String,
     val latitude: Double,
     val longitude: Double,
+    val location: String? = null,
     val image_url: String? = null,
     val user_id: String? = null,
     val event_date: String? = null,

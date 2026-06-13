@@ -18,7 +18,6 @@ class EventDetailViewModel(
 ) : ViewModel() {
 
     var event by mutableStateOf<Evenement?>(null)
-        private set
     
     var isLoading by mutableStateOf(false)
         private set
@@ -26,18 +25,25 @@ class EventDetailViewModel(
     var isJoined by mutableStateOf(false)
         private set
 
+    var isOwner by mutableStateOf(false)
+        private set
+
     var participantsCount by mutableIntStateOf(0)
+        private set
+
+    var joinToastKey by mutableIntStateOf(0)
         private set
 
     fun loadEvent(eventId: String) {
         viewModelScope.launch {
             isLoading = true
             try {
-                event = databaseService.getAllEvents().find { it.id == eventId }
+                event = databaseService.getEvent(eventId)
                 
                 val user = supabase.auth.currentUserOrNull()
                 if (user != null) {
                     isJoined = databaseService.isUserParticipating(eventId, user.id)
+                    isOwner = event?.user_id == user.id
                 }
                 participantsCount = databaseService.getParticipantsCount(eventId)
             } catch (e: Exception) {
@@ -59,6 +65,7 @@ class EventDetailViewModel(
                     databaseService.joinEvent(eventId, user.id)
                     isJoined = true
                     participantsCount++
+                    joinToastKey++
                 }
             } catch (e: Exception) {
                 // Gérer l'erreur (ex: déjà inscrit)
@@ -66,4 +73,3 @@ class EventDetailViewModel(
         }
     }
 }
-

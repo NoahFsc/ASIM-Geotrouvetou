@@ -178,7 +178,7 @@ fun ProfileContent(
                     modifier = Modifier.weight(1f),
                 )
                 StatCard(
-                    value = "—",
+                    value = "${uiState.joinedEvents.size}",
                     label = "PARTICIPATIONS",
                     modifier = Modifier.weight(1f),
                 )
@@ -216,11 +216,20 @@ fun ProfileContent(
                             }
                         }
                         ProfileTab.MesParticipations -> {
-                            Text(
-                                text = "Aucune participation",
-                                color = colorResource(R.color.text_lighter),
-                                fontSize = 14.sp,
-                            )
+                            if (uiState.joinedEvents.isEmpty()) {
+                                Text(
+                                    text = "Aucune participation",
+                                    color = colorResource(R.color.text_lighter),
+                                    fontSize = 14.sp,
+                                )
+                            } else {
+                                uiState.joinedEvents.forEach { event ->
+                                    ProfileEventItem(
+                                        event = event,
+                                        onClick = { event.id?.let { onEventClick(it) } }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
